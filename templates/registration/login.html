@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+
+{% load static %}
+{% load filters %}
+
+{% block title %}Login - Called2{% endblock %}
+
+{% block styles %}
+
+<style>
+    .login-hero {
+        background-image: url('{% static "img/missionary-training-center-walk.jpg" %}');
+    }
+</style>
+
+{% endblock %}
+
+{% block content %}
+<div class="hero login-hero min-h-screen">
+    <div class="hero-overlay"></div>
+    <div class="hero-content text-neutral-content text-center">
+        <div class="max-w-xl">
+            <h1 class="mb-5 text-5xl font-bold">Please sign in</h1>
+            {% if form.errors %}
+            <div class="alert alert-error mb-4">
+                <span>Unable to sign in. Please check your credentials and try again.</span>
+            </div>
+            {% endif %}
+            <div class="card text-base-content bg-base-100 w-full shrink-0 shadow-2xl">
+                <div class="card-body">
+                    <form method="post" action="{% url 'login' %}">
+                        <fieldset class="fieldset">
+                            <label class="label">User name</label>
+                            {{ form.username|add_class:"input w-full" }}
+                            <label class="label">Password</label>
+                            {{ form.password|add_class:"input w-full" }}
+                            <div><a href="{% url 'password_reset' %}" class="link link-hover">Forgot password?</a></div>
+                            <button type="submit" value="login" class="btn btn-neutral mt-4">Login</button>
+                        </fieldset>
+                        {% csrf_token %}
+                        <input type="hidden" name="next" value="{{ next }}">
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

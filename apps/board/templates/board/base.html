@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Missionaries</title>
+    {% load static %}
+    <link rel="icon" href="{% static 'favicon.ico' %}" type="image/x-icon" />
+    <link href="{% static 'board/static/board.css' %}" rel="stylesheet">
+    {% if next_url %}
+    <meta http-equiv="refresh" content="30; url={{ next_url }}">
+    {% endif %}
+    {% block styles %}{% endblock %}
+</head>
+
+
+<body id="body" class="fadein">
+    <section class="section">
+        {% block content %}{% endblock %}
+    </section>
+</body>
+
+
+<script>
+    // Fade out on navigation
+    window.onbeforeunload = function (e) {
+        document.getElementById('body').className = 'fadeout';
+    }
+
+    // Spacebar navigation
+    document.addEventListener('keydown', function (event) {
+        if (event.key === ' ') {
+            window.location.href = "{{ next_url | safe }}";
+        }
+    });
+
+    // True zoom scaling for .viewport, using CSS variables for TV size
+    function scaleViewport() {
+        var vw = window.innerWidth;
+        var vh = window.innerHeight;
+        var viewport = document.querySelector('.viewport');
+        if (viewport) {
+            var styles = getComputedStyle(viewport);
+            var boardW = parseInt(styles.getPropertyValue('--tv-width'));
+            var boardH = parseInt(styles.getPropertyValue('--tv-height'));
+            var scale = Math.min(vw / boardW, vh / boardH);
+            viewport.style.transform = 'translate(-50%, -50%) scale(' + scale + ')';
+        }
+    }
+    window.addEventListener('resize', scaleViewport);
+    window.addEventListener('DOMContentLoaded', scaleViewport);
+</script>
+
+</html>

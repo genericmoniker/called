@@ -1,0 +1,21 @@
+# To Do
+
+- [ ] Board app
+- [ ] Limit board missionaries to those actively serving (roughly)
+- [ ] Media configuration for photo upload
+- [ ] https://docs.djangoproject.com/en/5.2/howto/static-files/deployment/
+- [ ] Deployment
+- [ ] Missionary name early in admin form
+- [ ] Dynamically show name field set according to missionary type
+- [ ] Photo cropping
+- [x] Card preview
+- [ ] Restrict card preview access
+- [ ] Role for adding missionaries
+- [ ] Role for viewing the board
+- [ ] Self-registration
+- [ ] Edit approval
+- [ ] Social login
+- [ ] Landing page
+- [ ] Pretty missionary list and form
+- [ ] Optional mission language field
+- [ ] Highly cache-able to work offline?

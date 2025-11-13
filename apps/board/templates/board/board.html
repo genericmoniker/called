@@ -1,0 +1,23 @@
+{% extends "board/base.html" %}
+
+{% block content %}
+<div class="viewport">
+  <div class="container">
+    {% for missionary in missionaries %}
+    <div class="card">
+        <div class="photo">
+            <img src="{{ missionary.photo_url }}">
+        </div>
+        <div class="info">
+            <p class="name">{{missionary}}</p>
+            <p>
+                <span class="detail">{{missionary.mission}}</span><br />
+                <span class="detail">{{missionary.dates_serving}}</span><br />
+                <span class="detail">{{missionary.ward}}</span><br />
+            </p>
+        </div>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+{% endblock %}

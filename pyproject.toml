@@ -1,0 +1,29 @@
+[project]
+name = "called"
+version = "0.1.0"
+description = "Called - a celebration of missionary work"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "django>=5.2.7",
+    "pillow>=12.0.0",
+]
+
+[dependency-groups]
+dev = [
+    "pre-commit>=4.3.0",
+]
+
+[tool.ruff.lint]
+select = ["ALL"]
+ignore = [
+    "COM812",  # missing-trailing-comma
+    "D100",    # undocumented-public-module
+    "D104",    # undocumented-public-package
+    "D105",    # undocumented-magic-method
+    "D203",    # incorrect-blank-line-before-class
+    "D213",    # multi-line-summary-first-line
+    "EM101",   # raw-string-in-exception
+    "RUF012",  # mutable-class-default
+]
+exclude = ["**/migrations/**", ".venv"]

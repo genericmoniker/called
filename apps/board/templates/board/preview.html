@@ -1,0 +1,85 @@
+{% extends "board/base.html" %}
+
+{% block styles %}
+<style>
+:root {
+  --card-native-width: 1280;
+  --card-native-height: 1080;
+}
+html, body {
+  height: auto;
+  min-height: 100%;
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+
+.preview-card-outer {
+  max-width: 600px;
+  width: 80vw;
+  margin: 0 auto;
+  aspect-ratio: calc(var(--card-native-width) / var(--card-native-height));
+  position: relative;
+}
+
+.preview-card-inner {
+  width: 100%;
+  height: 100%;
+  position: relative;
+}
+
+#preview-card {
+  width: calc(var(--card-native-width) * 1px);
+  height: calc(var(--card-native-height) * 1px);
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.preview-ok-btn {
+  text-align: right;
+  margin-top: 2rem;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<h1>Preview</h1>
+<div class="preview-card-outer">
+  <div class="preview-card-inner">
+    <div class="card" id="preview-card">
+        <div class="photo">
+            <img src="{{ missionary.photo_url }}">
+        </div>
+        <div class="info">
+            <p class="name">{{missionary}}</p>
+            <p>
+                <span class="detail">{{missionary.mission}}</span><br />
+                <span class="detail">{{missionary.dates_serving}}</span><br />
+                <span class="detail">{{missionary.ward}}</span><br />
+            </p>
+        </div>
+    </div>
+  </div>
+</div>
+<div class="preview-ok-btn">
+  <button>OK</button>
+</div>
+<script>
+  // WYSIWYG scaling: scale the card to fit the wrapper
+  function scalePreviewCard() {
+    var outer = document.querySelector('.preview-card-outer');
+    var card = document.getElementById('preview-card');
+    if (!outer || !card) return;
+    var styles = getComputedStyle(document.documentElement);
+    var cardW = parseFloat(styles.getPropertyValue('--card-native-width'));
+    var cardH = parseFloat(styles.getPropertyValue('--card-native-height'));
+    var outerW = outer.offsetWidth;
+    var outerH = outer.offsetHeight;
+    var scale = Math.min(outerW / cardW, outerH / cardH);
+    card.style.transform = 'translate(-50%, -50%) scale(' + scale + ')';
+  }
+  window.addEventListener('resize', scalePreviewCard);
+  window.addEventListener('DOMContentLoaded', scalePreviewCard);
+</script>
+{% endblock %}

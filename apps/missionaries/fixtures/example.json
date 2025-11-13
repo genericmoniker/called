@@ -1,0 +1,126 @@
+[
+    {
+        "model": "auth.user",
+        "pk": 1,
+        "fields": {
+            "username": "admin",
+            "password": "pbkdf2_sha256$1000000$tZz4gkQAdDHViIrWk2rLyp$0aooPkkNAsQa9Hhp9/VvKR5c3Qneofqt0Q5PD727Rec=",
+            "is_superuser": true,
+            "is_staff": true,
+            "is_active": true
+        }
+    },
+    {
+        "model": "missionaries.ward",
+        "pk": 1,
+        "fields": {
+            "name": "Lehi 1st Ward"
+        }
+    },
+    {
+        "model": "missionaries.missionary",
+        "pk": 1,
+        "fields": {
+            "type": "elder",
+            "first_name": "John",
+            "last_name": "Smith",
+            "mission_name": "Brazil São Paulo East Mission",
+            "ward": 1,
+            "start_date": "2023-01-01",
+            "end_date": "2024-01-01",
+            "photo": "missionaries/photos/bear-smith-portrait.jpg",
+            "created_by": 1,
+            "created_at": "2023-01-01T12:00:00Z",
+            "updated_at": "2023-01-01T12:00:00Z"
+        }
+    },
+    {
+        "model": "missionaries.missionary",
+        "pk": 2,
+        "fields": {
+            "type": "sister",
+            "first_name": "Jane",
+            "last_name": "Smith",
+            "mission_name": "China Hong Kong Mission",
+            "ward": 1,
+            "start_date": "2024-01-01",
+            "end_date": "2026-01-01",
+            "photo": "missionaries/photos/bear-smith-landscape.jpg",
+            "created_by": 1,
+            "created_at": "2023-01-01T12:00:00Z",
+            "updated_at": "2023-01-01T12:00:00Z"
+        }
+    },
+    {
+        "model": "missionaries.missionary",
+        "pk": 3,
+        "fields": {
+            "type": "couple",
+            "husband_first_name": "Michael",
+            "husband_last_name": "Johnson",
+            "wife_first_name": "Emily",
+            "wife_last_name": "Johnson",
+            "mission_name": "Mexico Mexico City Mission",
+            "ward": 1,
+            "start_date": "2025-09-01",
+            "end_date": "2027-03-01",
+            "photo": "missionaries/photos/bear-smith-sq_2268x2268.jpg",
+            "created_by": 1,
+            "created_at": "2023-01-01T12:00:00Z",
+            "updated_at": "2023-01-01T12:00:00Z"
+        }
+    },
+    {
+        "model": "missionaries.missionary",
+        "pk": 4,
+        "fields": {
+            "type": "elder",
+            "first_name": "David",
+            "last_name": "Jones",
+            "mission_name": "Tonga Mission",
+            "ward": 1,
+            "start_date": "2023-01-01",
+            "end_date": "2024-01-01",
+            "photo": "",
+            "created_by": 1,
+            "created_at": "2023-01-01T12:00:00Z",
+            "updated_at": "2023-01-01T12:00:00Z"
+        }
+    },
+    {
+        "model": "missionaries.missionary",
+        "pk": 5,
+        "fields": {
+            "type": "sister",
+            "first_name": "Lucy",
+            "last_name": "Jones",
+            "mission_name": "Oregon Salem Mission",
+            "ward": 1,
+            "start_date": "2025-01-01",
+            "end_date": "2026-01-01",
+            "photo": "",
+            "created_by": 1,
+            "created_at": "2023-01-01T12:00:00Z",
+            "updated_at": "2023-01-01T12:00:00Z"
+        }
+    },
+    {
+        "model": "missionaries.missionary",
+        "pk": 6,
+        "fields": {
+            "type": "couple",
+            "husband_first_name": "Joseph",
+            "husband_last_name": "Silva",
+            "wife_first_name": "Maria",
+            "wife_last_name": "Silva",
+            "mission_name": "Mexico Mexico City Mission",
+            "ward": 1,
+            "start_date": "2025-09-01",
+            "end_date": "2027-03-01",
+            "photo": "",
+            "created_by": 1,
+            "created_at": "2023-01-01T12:00:00Z",
+            "updated_at": "2023-01-01T12:00:00Z"
+        }
+    }
+]
