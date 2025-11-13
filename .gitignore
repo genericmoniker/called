@@ -11,3 +11,5 @@ wheels/
 
 # Instance directory
 instance/
+
+import/
