@@ -9,6 +9,9 @@ wheels/
 # Virtual environments
 .venv
 
+# Private settings
+.env
+
 # Instance directory
 instance/
 

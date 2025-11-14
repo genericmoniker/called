@@ -9,6 +9,7 @@
 - [ ] Dynamically show name field set according to missionary type
 - [ ] Photo cropping
 - [x] Card preview
+- [ ] Sentry
 - [ ] Restrict card preview access
 - [ ] Role for adding missionaries
 - [ ] Role for viewing the board

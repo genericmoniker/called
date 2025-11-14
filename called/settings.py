@@ -9,10 +9,16 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 
+import os
 from pathlib import Path
+
+from dotenv import load_dotenv
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
+
+env_file = BASE_DIR / ".env"
+load_dotenv(dotenv_path=env_file)
 
 INSTANCE_DIR = BASE_DIR / "instance"
 INSTANCE_DIR.mkdir(exist_ok=True)
@@ -27,10 +33,12 @@ MEDIA_URL = "media/"
 
 # SECURITY WARNING: keep the secret key used in production secret!
 # Get this from environment variable or a secrets manager!
-SECRET_KEY = "r@ql)$=l52wtl^wt1@*p1f!@gcnfe+tf=)f)%5sps73=tm4+z5"  # noqa: S105
+SECRET_KEY = os.environ.get(
+    "DJANGO_SECRET_KEY", "r@ql)$=l52wtl^wt1@*p1f!@gcnfe+tf=)f)%5sps73=tm4+z5"
+)
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = os.environ.get("DJANGO_DEBUG", "") != "False"
 
 ALLOWED_HOSTS = []
 
@@ -46,11 +54,13 @@ INSTALLED_APPS = [
     "django.contrib.contenttypes",
     "django.contrib.sessions",
     "django.contrib.messages",
+    "whitenoise.runserver_nostatic",  # Use WhiteNoise's static file handling in dev.
     "django.contrib.staticfiles",
 ]
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
+    "whitenoise.middleware.WhiteNoiseMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
@@ -128,6 +138,17 @@ STATIC_URL = "static/"
 STATICFILES_DIRS = [
     BASE_DIR / "static",
 ]
+
+# This is where collected static files will be stored and served from in production.
+STATIC_ROOT = INSTANCE_DIR / "staticfiles"
+
+# WhiteNoise comes with a storage backend which compresses static files and hashes them
+# to unique names, so they can safely be cached forever.
+STORAGES = {
+    "staticfiles": {
+        "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
+    },
+}
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
