@@ -91,6 +91,15 @@ def create_server(config: Config) -> str:
         "user_data": cloud_config,
     }
 
+    # Warn if there is an existing droplet with the same name.
+    existing_droplets = client.droplets.list()
+    for droplet in existing_droplets:
+        if droplet.name == config.hostname:
+            print(
+                f"Warning: A Droplet named '{config.hostname}' ({droplet.id}) "
+                "already exists. Continuing to create another one..."
+            )
+
     resp = client.droplets.create(body=req)
     droplet_id = resp["droplet"]["id"]
     print(f"Created droplet {droplet_id}, waiting for it to become active")
@@ -108,16 +117,28 @@ def create_server(config: Config) -> str:
 
 
 def update_dns(config: Config, ip_address: str) -> None:
-    """Update the Cloudflare DNS record for the relay server."""
-    print("Updating DNS")
+    """Create or update the Cloudflare DNS record for the server."""
+    print("Configuring DNS")
     client = Cloudflare(api_token=config.cloudflare_api_token)
     resp = client.dns.records.list(
         zone_id=config.cloudflare_zone_id, name=config.hostname
     )
-    record_id = resp.result[0].id
-    client.dns.records.edit(
-        record_id, zone_id=config.cloudflare_zone_id, content=ip_address
-    )
+    if not resp.result:
+        print("Creating new DNS record")
+        client.dns.records.create(
+            zone_id=config.cloudflare_zone_id,
+            type="A",
+            name=config.hostname,
+            content=ip_address,
+            ttl=1,  # 1 = automatic
+            proxied=False,
+        )
+    else:
+        record_id = resp.result[0].id
+        client.dns.records.edit(
+            record_id, zone_id=config.cloudflare_zone_id, content=ip_address
+        )
+
     print(f"DNS record for {config.hostname} set to {ip_address}")
 
 

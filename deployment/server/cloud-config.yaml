@@ -27,8 +27,8 @@ runcmd:
   - |
     su - app-user -c '
       curl -LsSf https://astral.sh/uv/install.sh | sh
-      git clone https://github.com/genericmoniker/called.git /home/app-user/called
-      /home/app-user/called/deployment/server/update-app-user.sh
+      git clone https://github.com/genericmoniker/called.git $HOME/called
+      $HOME/called/deployment/server/update-app-user.sh
     '
 
   - ufw allow 443/tcp  # Allow HTTPS port through the firewall

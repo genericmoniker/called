@@ -4,6 +4,9 @@
 
 set -euo pipefail
 
+# Ensure uv is in PATH
+source ~/.local/bin/env
+
 cd ~/called
 
 # Install/update dependencies
