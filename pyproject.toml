@@ -16,7 +16,9 @@ dependencies = [
 
 [dependency-groups]
 dev = [
+    "cloudflare>=4.3.1",
     "pre-commit>=4.3.0",
+    "pydo>=0.21.0",
 ]
 
 [tool.ruff.lint]

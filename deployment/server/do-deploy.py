@@ -13,11 +13,13 @@ Droplet sizes: https://slugs.do-api.dev
 
 # ruff: noqa: T201
 import os
+import traceback
 from dataclasses import dataclass
 from pathlib import Path
 from time import sleep
 
 from cloudflare import Cloudflare
+from cloudflare.types.dns.record_list_params import Name
 from dotenv import load_dotenv
 from pydo import Client
 
@@ -33,6 +35,8 @@ def main() -> None:
         print("✔  Done")
     except Exception as e:  # noqa: BLE001
         print(f"❌ Error: {e}")
+        print()
+        traceback.print_exception(e)
 
 
 @dataclass
@@ -92,13 +96,13 @@ def create_server(config: Config) -> str:
     }
 
     # Warn if there is an existing droplet with the same name.
-    existing_droplets = client.droplets.list()
-    for droplet in existing_droplets:
-        if droplet.name == config.hostname:
-            print(
-                f"Warning: A Droplet named '{config.hostname}' ({droplet.id}) "
-                "already exists. Continuing to create another one..."
-            )
+    resp = client.droplets.list(name=config.hostname)
+    existing_droplets = resp["droplets"]
+    if existing_droplets:
+        print(
+            f"⚠  A Droplet named '{config.hostname}' already exists. "
+            "Continuing to create another one..."
+        )
 
     resp = client.droplets.create(body=req)
     droplet_id = resp["droplet"]["id"]
@@ -120,9 +124,8 @@ def update_dns(config: Config, ip_address: str) -> None:
     """Create or update the Cloudflare DNS record for the server."""
     print("Configuring DNS")
     client = Cloudflare(api_token=config.cloudflare_api_token)
-    resp = client.dns.records.list(
-        zone_id=config.cloudflare_zone_id, name=config.hostname
-    )
+    name = Name(exact=config.hostname)
+    resp = client.dns.records.list(zone_id=config.cloudflare_zone_id, name=name)
     if not resp.result:
         print("Creating new DNS record")
         client.dns.records.create(
@@ -136,7 +139,11 @@ def update_dns(config: Config, ip_address: str) -> None:
     else:
         record_id = resp.result[0].id
         client.dns.records.edit(
-            record_id, zone_id=config.cloudflare_zone_id, content=ip_address
+            dns_record_id=record_id,
+            zone_id=config.cloudflare_zone_id,
+            name=config.hostname,
+            type="A",
+            content=ip_address,
         )
 
     print(f"DNS record for {config.hostname} set to {ip_address}")
