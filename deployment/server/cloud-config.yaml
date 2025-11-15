@@ -1,0 +1,34 @@
+#cloud-config
+
+# Automatic server configuration using cloud-init.
+# Documentation: https://cloudinit.readthedocs.io/en/latest/
+# Server logs at:
+# /var/log/cloud-init.log
+# /var/log/cloud-init-output.log
+
+# This is a template. Curly brace values are replaced with a call to
+# Python's str.format before this file is sent to the cloud-init service.
+users:
+  - name: root
+    lock_passwd: true           # Disable password-based login for root
+
+  - name: app-user
+    gecos: Application User
+
+package_update: true
+package_upgrade: true
+packages:
+  - curl
+  - git
+  - nginx
+  - ufw
+
+runcmd:
+  - |
+    su - app-user -c '
+      curl -LsSf https://astral.sh/uv/install.sh | sh
+      git clone https://github.com/genericmoniker/called.git /home/app-user/called
+      /home/app-user/called/deployment/server/update-app-user.sh
+    '
+
+  - ufw allow 443/tcp  # Allow HTTPS port through the firewall
