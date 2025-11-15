@@ -4,6 +4,9 @@
 
 set -euo pipefail
 
+# Install uv if not already installed
+curl -LsSf https://astral.sh/uv/install.sh | sh
+
 # Ensure uv is in PATH
 source ~/.local/bin/env
 

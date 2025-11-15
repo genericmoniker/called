@@ -6,11 +6,12 @@
 # /var/log/cloud-init.log
 # /var/log/cloud-init-output.log
 
-# This is a template. Curly brace values are replaced with a call to
+# This file is a template. Curly brace values are replaced with a call to
 # Python's str.format before this file is sent to the cloud-init service.
+
 users:
   - name: root
-    lock_passwd: true           # Disable password-based login for root
+    lock_passwd: true           # Disable password-based login for root.
 
   - name: app-user
     gecos: Application User
@@ -22,13 +23,13 @@ packages:
   - git
   - nginx
   - ufw
+  - snap:
+    - certbot
 
 runcmd:
-  - |
-    su - app-user -c '
-      curl -LsSf https://astral.sh/uv/install.sh | sh
-      git clone https://github.com/genericmoniker/called.git $HOME/called
-      $HOME/called/deployment/server/update-app-user.sh
-    '
+  # Clone the repository as app-user.
+  - su - app-user -c 'git clone https://github.com/genericmoniker/called.git $HOME/called'
 
-  - ufw allow 443/tcp  # Allow HTTPS port through the firewall
+  # Run initial setup scripts that are in the repository.
+  - su - app-user -c '$HOME/called/deployment/server/update-app-user.sh'
+  - /home/app-user/called/deployment/server/update-root.sh {domain}

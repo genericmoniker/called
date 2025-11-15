@@ -79,9 +79,20 @@ def create_server(config: Config) -> str:
     print(f"Creating droplet {config.hostname}")
     client = Client(config.digitalocean_token)
 
+    # Warn if there is an existing droplet with the same name.
+    resp = client.droplets.list(name=config.hostname)
+    existing_droplets = resp["droplets"]
+    if existing_droplets:
+        print(
+            f"⚠  A Droplet named '{config.hostname}' already exists. "
+            "Still continuing to create another one..."
+        )
+
     here = Path(__file__).parent
     cloud_config_path = here / "cloud-config.yaml"
-    cloud_config = cloud_config_path.read_text()
+    cloud_config = cloud_config_path.read_text().format(
+        domain=config.hostname,
+    )
 
     req = {
         "name": config.hostname,
@@ -89,20 +100,11 @@ def create_server(config: Config) -> str:
         "size": config.droplet_size,
         "image": "ubuntu-24-04-x64",
         "ssh_keys": [config.root_ssh_key],
-        "backups": False,
+        "backups": True,
         "ipv6": False,
         "monitoring": True,
         "user_data": cloud_config,
     }
-
-    # Warn if there is an existing droplet with the same name.
-    resp = client.droplets.list(name=config.hostname)
-    existing_droplets = resp["droplets"]
-    if existing_droplets:
-        print(
-            f"⚠  A Droplet named '{config.hostname}' already exists. "
-            "Continuing to create another one..."
-        )
 
     resp = client.droplets.create(body=req)
     droplet_id = resp["droplet"]["id"]

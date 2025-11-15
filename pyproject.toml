@@ -5,8 +5,6 @@ description = "Called - a celebration of missionary work"
 readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
-    "certbot>=5.1.0",
-    "certbot-nginx>=5.1.0",
     "django>=5.2.7",
     "gunicorn>=23.0.0",
     "pillow>=12.0.0",
