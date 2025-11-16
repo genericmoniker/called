@@ -33,6 +33,9 @@ def main() -> None:
         ip_address = create_server(config)
         update_dns(config, ip_address)
         print("✔  Done")
+        print("Further on-server provisioning will take a few minutes to complete.")
+        print("After connecting via ssh, you can monitor progress with:")
+        print("tail -f /var/log/cloud-init-output.log")
     except Exception as e:  # noqa: BLE001
         print(f"❌ Error: {e}")
         print()
