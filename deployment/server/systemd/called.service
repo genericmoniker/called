@@ -12,9 +12,7 @@ ExecStart=/home/app-user/.local/bin/uv run gunicorn called.wsgi:application \
     --workers 4 \
     --worker-class gthread \
     --threads 2 \
-    --timeout 60 \
-    --access-logfile - \
-    --error-logfile -
+    --timeout 60
 Restart=always
 RestartSec=10
 StandardOutput=journal

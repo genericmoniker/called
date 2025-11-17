@@ -24,7 +24,16 @@ packages:
   - nginx
   - ufw
   - snap:
-    - certbot
+    - [certbot, --classic]
+
+write_files:
+  - path: /home/app-user/called/.env
+    owner: app-user:app-user
+    permissions: '600'
+    content: |
+      DJANGO_DEBUG=False
+      DJANGO_ALLOWED_HOSTS={domain_name}
+      DJANGO_SECRET_KEY={secret_key}
 
 runcmd:
   # Clone the repository as app-user.
@@ -32,4 +41,9 @@ runcmd:
 
   # Run initial setup scripts that are in the repository.
   - su - app-user -c '$HOME/called/deployment/server/update-app-user.sh'
-  - /home/app-user/called/deployment/server/update-root.sh {domain}
+  - /home/app-user/called/deployment/server/update-root.sh {domain_name}
+
+  # Obtain and install SSL certificates using Certbot.
+  - certbot --nginx -d {domain_name} -n --agree-tos -m {admin_email}
+
+final_message: "The server setup is complete."

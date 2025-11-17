@@ -4,8 +4,8 @@
 # This script should be idempotent.
 set -euo pipefail
 
-DOMAIN="$1"
-if [ -z "$DOMAIN" ]; then
+DOMAIN_NAME="$1"
+if [ -z "$DOMAIN_NAME" ]; then
     echo "Usage: $0 <my-domain.com>"
     exit 1
 fi
@@ -34,7 +34,7 @@ dst_nginx_conf="/etc/nginx/sites-available/called"
 
 if [ ! -f /etc/nginx/sites-available/called ]; then
     cp "$src_nginx_conf" "$dst_nginx_conf"
-    sed -i "s/{domain}/$DOMAIN/g" "$dst_nginx_conf"  # Replace placeholder with actual domain name.
+    sed -i "s/{domain_name}/$DOMAIN_NAME/g" "$dst_nginx_conf"  # Replace placeholder with actual domain name.
 fi
 
 # Enable site if not already enabled

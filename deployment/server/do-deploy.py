@@ -46,8 +46,10 @@ def main() -> None:
 class Config:
     """Configuration for creating the server."""
 
-    hostname: str
+    domain_name: str
+    admin_email: str
     droplet_size: str
+    secret_key: str
     root_ssh_key: str
     digitalocean_token: str
     cloudflare_zone_id: str
@@ -57,8 +59,10 @@ class Config:
     def from_env(cls) -> "Config":
         """Create a Config instance from environment variables."""
         return cls(
-            hostname=cls._get_env("SERVER_HOSTNAME"),
+            domain_name=cls._get_env("SERVER_DOMAIN_NAME"),
+            admin_email=cls._get_env("SERVER_ADMIN_EMAIL"),
             droplet_size=cls._get_env("SERVER_DROPLET_SIZE"),
+            secret_key=cls._get_env("DJANGO_SECRET_KEY"),
             root_ssh_key=cls._get_env("SERVER_ROOT_SSH_KEY_FINGERPRINT", ""),
             digitalocean_token=cls._get_env("DIGITALOCEAN_TOKEN"),
             cloudflare_zone_id=cls._get_env("CLOUDFLARE_ZONE_ID"),
@@ -79,26 +83,30 @@ def create_server(config: Config) -> str:
 
     Returns the IP address of the new droplet.
     """
-    print(f"Creating droplet {config.hostname}")
+    print(f"Creating droplet {config.domain_name}")
     client = Client(config.digitalocean_token)
 
     # Warn if there is an existing droplet with the same name.
-    resp = client.droplets.list(name=config.hostname)
+    resp = client.droplets.list(name=config.domain_name)
     existing_droplets = resp["droplets"]
     if existing_droplets:
         print(
-            f"⚠  A Droplet named '{config.hostname}' already exists. "
+            f"⚠  A Droplet named '{config.domain_name}' already exists. "
             "Still continuing to create another one..."
         )
 
     here = Path(__file__).parent
     cloud_config_path = here / "cloud-config.yaml"
+
+    # Replace placeholders in cloud-config with actual values.
     cloud_config = cloud_config_path.read_text().format(
-        domain=config.hostname,
+        domain_name=config.domain_name,
+        secret_key=config.secret_key,
+        admin_email=config.admin_email,
     )
 
     req = {
-        "name": config.hostname,
+        "name": config.domain_name,
         "region": "sfo3",
         "size": config.droplet_size,
         "image": "ubuntu-24-04-x64",
@@ -129,14 +137,14 @@ def update_dns(config: Config, ip_address: str) -> None:
     """Create or update the Cloudflare DNS record for the server."""
     print("Configuring DNS")
     client = Cloudflare(api_token=config.cloudflare_api_token)
-    name = Name(exact=config.hostname)
+    name = Name(exact=config.domain_name)
     resp = client.dns.records.list(zone_id=config.cloudflare_zone_id, name=name)
     if not resp.result:
         print("Creating new DNS record")
         client.dns.records.create(
             zone_id=config.cloudflare_zone_id,
             type="A",
-            name=config.hostname,
+            name=config.domain_name,
             content=ip_address,
             ttl=1,  # 1 = automatic
             proxied=False,
@@ -146,12 +154,12 @@ def update_dns(config: Config, ip_address: str) -> None:
         client.dns.records.edit(
             dns_record_id=record_id,
             zone_id=config.cloudflare_zone_id,
-            name=config.hostname,
+            name=config.domain_name,
             type="A",
             content=ip_address,
         )
 
-    print(f"DNS record for {config.hostname} set to {ip_address}")
+    print(f"DNS record for {config.domain_name} set to {ip_address}")
 
 
 if __name__ == "__main__":
