@@ -4,6 +4,9 @@
 
 set -euo pipefail
 
+# Move the production .env file into the repository.
+mv ~/.env ~/called/.env | true
+
 # Install uv if not already installed
 curl -LsSf https://astral.sh/uv/install.sh | sh
 
