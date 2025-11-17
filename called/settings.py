@@ -7,18 +7,17 @@ https://docs.djangoproject.com/en/5.2/topics/settings/
 
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.2/ref/settings/
+
+This file is configured by default for development settings. In production,
+environment variables override the default settings where needed through an
+an EnvironmentFile directive in the systemd service file.
 """
 
 import os
 from pathlib import Path
 
-from dotenv import load_dotenv
-
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
-
-env_file = BASE_DIR / ".env"
-load_dotenv(dotenv_path=env_file)
 
 INSTANCE_DIR = BASE_DIR / "instance"
 INSTANCE_DIR.mkdir(exist_ok=True)

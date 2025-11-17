@@ -27,11 +27,9 @@ packages:
     - [certbot, --classic]
 
 write_files:
-  # Create the .env file for the Django application.
-  # This will be moved into the git repository after cloning.
-  # See update-app-user.sh.
-  - path: /home/app-user/.env
-    owner: app-user:app-user
+  # Create the production.env file for the Django application.
+  # This is referenced by the systemd service file.
+  - path: /var/opt/called/production.env
     permissions: '600'
     content: |
       DJANGO_DEBUG=False

@@ -7,6 +7,7 @@ Type=notify
 User=app-user
 Group=app-user
 WorkingDirectory=/home/app-user/called
+EnvironmentFile=/var/opt/called/production.env
 ExecStart=/home/app-user/.local/bin/uv run gunicorn called.wsgi:application \
     --bind 127.0.0.1:8000 \
     --workers 4 \
