@@ -26,6 +26,10 @@ packages:
   - snap:
     - [certbot, --classic]
 
+runcmd:
+  # Clone the repository as app-user.
+  - su - app-user -c 'git clone https://github.com/genericmoniker/called.git $HOME/called'
+
 write_files:
   - path: /home/app-user/called/.env
     owner: app-user:app-user
@@ -36,9 +40,6 @@ write_files:
       DJANGO_SECRET_KEY={secret_key}
 
 runcmd:
-  # Clone the repository as app-user.
-  - su - app-user -c 'git clone https://github.com/genericmoniker/called.git $HOME/called'
-
   # Run initial setup scripts that are in the repository.
   - su - app-user -c '$HOME/called/deployment/server/update-app-user.sh'
   - /home/app-user/called/deployment/server/update-root.sh {domain_name}
