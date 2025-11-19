@@ -50,6 +50,3 @@ fi
 # Configure firewall (idempotent - ufw handles this gracefully)
 ufw allow 80/tcp   # Allow HTTP (needed for certbot)
 ufw allow 443/tcp  # Allow HTTPS
-
-# Set up TLS with certbot (idempotent)
-certbot --nginx  --non-interactive --agree-tos
