@@ -2,7 +2,7 @@
 
 # Update the application in production (run as app-user).
 
-set -euo pipefail
+set -euox pipefail
 
 # Install uv if not already installed
 curl -LsSf https://astral.sh/uv/install.sh | sh

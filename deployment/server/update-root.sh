@@ -2,7 +2,7 @@
 
 # Update the application in production (run as root).
 # This script should be idempotent.
-set -euo pipefail
+set -euox pipefail
 
 DOMAIN_NAME="$1"
 if [ -z "$DOMAIN_NAME" ]; then
