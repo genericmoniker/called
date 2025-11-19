@@ -3,17 +3,11 @@ Description=Called Application
 After=network.target
 
 [Service]
-Type=notify
 User=app-user
 Group=app-user
 WorkingDirectory=/home/app-user/called
 EnvironmentFile=/var/opt/called/production.env
-ExecStart=/home/app-user/.local/bin/uv run gunicorn called.wsgi:application \
-    --bind 127.0.0.1:8000 \
-    --workers 4 \
-    --worker-class gthread \
-    --threads 2 \
-    --timeout 60
+ExecStart=/home/app-user/.local/bin/uv run gunicorn --config deployment/server/gunicorn-config.py called.wsgi:application
 Restart=always
 RestartSec=10
 StandardOutput=journal
