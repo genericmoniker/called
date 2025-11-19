@@ -37,6 +37,11 @@ write_files:
       DJANGO_SECRET_KEY={secret_key}
 
 runcmd:
+  # Try to get journald to use the correct /etc/machine-id file.
+  # Otherwise journalctl will say, "No journal files were found" despite logs being present.
+  - systemd-machine-id-setup
+  - systemctl restart systemd-journald
+
   # Clone the repository as app-user.
   - su - app-user -c 'git clone https://github.com/genericmoniker/called.git $HOME/called'
 
