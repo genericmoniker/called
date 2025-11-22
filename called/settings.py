@@ -14,6 +14,7 @@ an EnvironmentFile directive in the systemd service file.
 """
 
 import os
+from datetime import timedelta
 from pathlib import Path
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -118,7 +119,9 @@ AUTH_PASSWORD_VALIDATORS = [
 ]
 
 # Session settings
+# So long as the board page is making requests, the session will persist indefinitely.
 SESSION_SAVE_EVERY_REQUEST = True
+SESSION_COOKIE_AGE = timedelta(days=7).total_seconds()
 
 
 # Internationalization
