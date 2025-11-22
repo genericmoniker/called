@@ -21,10 +21,12 @@ from django.conf.urls.static import static
 from django.contrib import admin
 from django.urls import include, path
 
+admin.site.site_header = "Called"
+admin.site.site_title = "Called administration"
+
 urlpatterns = [  # noqa: RUF005
     path("admin/", admin.site.urls),
     path("board/", include("apps.board.urls")),
     path("accounts/", include("django.contrib.auth.urls")),
-
     # For serving media files during development:
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

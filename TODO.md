@@ -1,7 +1,6 @@
 # To Do
 
 - [ ] Board app
-- [ ] Limit board missionaries to those actively serving (roughly)
 - [ ] Media configuration for photo upload
 - [ ] https://docs.djangoproject.com/en/5.2/howto/static-files/deployment/
 - [ ] Deployment
