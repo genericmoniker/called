@@ -117,6 +117,9 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
+# Session settings
+SESSION_SAVE_EVERY_REQUEST = True
+
 
 # Internationalization
 # https://docs.djangoproject.com/en/5.2/topics/i18n/
@@ -144,6 +147,9 @@ STATIC_ROOT = INSTANCE_DIR / "staticfiles"
 # WhiteNoise comes with a storage backend which compresses static files and hashes them
 # to unique names, so they can safely be cached forever.
 STORAGES = {
+    "default": {
+        "BACKEND": "django.core.files.storage.FileSystemStorage",
+    },
     "staticfiles": {
         "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
     },
