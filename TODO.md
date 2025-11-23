@@ -1,8 +1,5 @@
 # To Do
 
-- [ ] Board app
-- [ ] Media configuration for photo upload
-- [ ] https://docs.djangoproject.com/en/5.2/howto/static-files/deployment/
 - [ ] Deployment
 - [ ] Missionary name early in admin form
 - [ ] Dynamically show name field set according to missionary type

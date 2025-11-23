@@ -1,7 +1,9 @@
 from datetime import date
+from pathlib import Path
 
 from django.core.exceptions import ValidationError
 from django.db import models
+from django.utils.text import slugify
 
 
 class Ward(models.Model):
@@ -11,6 +13,17 @@ class Ward(models.Model):
 
     def __str__(self) -> str:
         return self.name
+
+
+def _upload_to_path(instance: models.Model, filename: str) -> str:
+    """Generate an upload path for a missionary photo."""
+    if not isinstance(instance, Missionary):
+        msg = "Instance must be a Missionary"
+        raise TypeError(msg)
+    name = slugify(instance.full_name)
+    original = Path(filename)
+    ext = original.suffix
+    return f"missionaries/photos/{name}{ext}"
 
 
 class Missionary(models.Model):
@@ -42,7 +55,7 @@ class Missionary(models.Model):
     )
     start_date = models.DateField()
     end_date = models.DateField()
-    photo = models.ImageField(upload_to="photos/", blank=True, null=True)
+    photo = models.ImageField(upload_to=_upload_to_path, blank=True, null=True)
 
     # Metadata
     created_by = models.ForeignKey("auth.User", on_delete=models.CASCADE)
@@ -61,6 +74,16 @@ class Missionary(models.Model):
         if self.type == "elder":
             return f"Elder {self.first_name} {self.last_name}"
         return f"Sister {self.first_name} {self.last_name}"
+
+    @property
+    def full_name(self) -> str:
+        """Get the full sortable name of the missionary."""
+        if self.type == "couple":
+            return (
+                f"{self.husband_last_name} {self.husband_first_name} & "
+                f"{self.wife_last_name} {self.wife_first_name}"
+            )
+        return f"{self.last_name} {self.first_name}"
 
     @property
     def photo_url(self) -> str:
