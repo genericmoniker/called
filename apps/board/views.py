@@ -1,7 +1,7 @@
 from datetime import date, timedelta
 
 from django.contrib.auth.decorators import login_required
-from django.db.models import Q, QuerySet
+from django.db.models import Case, F, Q, QuerySet, When
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import render
 
@@ -43,5 +43,14 @@ def _query_missionaries(offset: int) -> tuple[int, QuerySet[Missionary]]:
         missionaries for the current page.
     """
     cutoff_date = date.today() - timedelta(days=DAYS_AFTER_END_DATE)  # noqa: DTZ011
-    queryset = Missionary.objects.filter(Q(end_date__gte=cutoff_date))
+    queryset = Missionary.objects.filter(Q(end_date__gte=cutoff_date)).order_by(
+        Case(
+            When(last_name="", then=F("husband_last_name")),
+            default=F("last_name"),
+        ),
+        Case(
+            When(first_name="", then=F("husband_first_name")),
+            default=F("first_name"),
+        ),
+    )
     return queryset.count(), queryset[offset : offset + PAGE_ITEM_COUNT]
