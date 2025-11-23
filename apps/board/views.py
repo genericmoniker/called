@@ -25,6 +25,7 @@ def index(request: HttpRequest) -> HttpResponse:
     return render(request, template, context)
 
 
+@login_required
 def preview(request: HttpRequest) -> HttpResponse:
     """Preview a single missionary card."""
     missionary_id = request.GET.get("missionary_id")
