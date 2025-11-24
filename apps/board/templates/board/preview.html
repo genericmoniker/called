@@ -40,6 +40,32 @@ html, body {
   text-align: right;
   margin-top: 2rem;
 }
+
+/* Photo editor styles */
+.photo-editor-controls {
+  display: none;
+  text-align: center;
+  margin-top: 1rem;
+  gap: 1rem;
+  justify-content: center;
+}
+
+.photo-editor-controls.active {
+  display: flex;
+}
+
+.photo-editable {
+  cursor: grab;
+}
+
+.photo-editable:active {
+  cursor: grabbing;
+}
+
+.photo-editable img {
+  user-select: none;
+  pointer-events: none;
+}
 </style>
 {% endblock %}
 
@@ -48,8 +74,9 @@ html, body {
 <div class="preview-card-outer">
   <div class="preview-card-inner">
     <div class="card" id="preview-card">
-        <div class="photo">
-            <img src="{{ missionary.photo_url }}">
+        <div class="photo" id="photo-container">
+            <img src="{{ missionary.photo_url }}" id="photo-img"
+                 style="transform: scale({{ missionary.photo_scale }}) translate({{ missionary.photo_translate_x }}px, {{ missionary.photo_translate_y }}px); transform-origin: center;">
         </div>
         <div class="info">
             <p class="name">{{missionary}}</p>
@@ -63,8 +90,21 @@ html, body {
   </div>
 </div>
 <div class="preview-ok-btn">
-  <button>OK</button>
+  <button onclick="window.close()">OK</button>
 </div>
+<div class="photo-editor-controls" id="editor-controls">
+  <button onclick="savePhotoTransform()" class="btn btn-primary">Save</button>
+  <button onclick="cancelPhotoEdit()" class="btn">Cancel</button>
+</div>
+
+<form id="save-form" method="post" style="display: none;">
+  {% csrf_token %}
+  <input type="hidden" name="missionary_id" value="{{ missionary.id }}">
+  <input type="hidden" name="photo_scale" id="save-scale">
+  <input type="hidden" name="photo_translate_x" id="save-translate-x">
+  <input type="hidden" name="photo_translate_y" id="save-translate-y">
+</form>
+
 <script>
   // WYSIWYG scaling: scale the card to fit the wrapper
   function scalePreviewCard() {
@@ -81,5 +121,223 @@ html, body {
   }
   window.addEventListener('resize', scalePreviewCard);
   window.addEventListener('DOMContentLoaded', scalePreviewCard);
+
+  // Photo editor functionality
+  (function() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const editMode = urlParams.get('edit') === '1';
+
+    if (!editMode) return;
+
+    const photoContainer = document.getElementById('photo-container');
+    const photoImg = document.getElementById('photo-img');
+    const editorControls = document.getElementById('editor-controls');
+
+    // Initial transform values
+    let scale = {{ missionary.photo_scale }};
+    let translateX = {{ missionary.photo_translate_x }};
+    let translateY = {{ missionary.photo_translate_y }};
+
+    // Store original values for cancel
+    const originalScale = scale;
+    const originalTranslateX = translateX;
+    const originalTranslateY = translateY;
+
+    // Enable edit mode
+    photoContainer.classList.add('photo-editable');
+    editorControls.classList.add('active');
+
+    // Get container and image dimensions
+    function getConstraints() {
+      const containerRect = photoContainer.getBoundingClientRect();
+      const imgRect = photoImg.getBoundingClientRect();
+      const imgNaturalWidth = photoImg.naturalWidth;
+      const imgNaturalHeight = photoImg.naturalHeight;
+
+      // Calculate minimum scale to ensure no letterboxing
+      // Image must fill container in at least one dimension
+      const containerAspect = containerRect.width / containerRect.height;
+      const imageAspect = imgNaturalWidth / imgNaturalHeight;
+
+      let minScale;
+      if (imageAspect > containerAspect) {
+        // Image is wider - must fill height
+        minScale = containerRect.height / imgNaturalHeight;
+      } else {
+        // Image is taller - must fill width
+        minScale = containerRect.width / imgNaturalWidth;
+      }
+
+      return {
+        containerRect,
+        imgNaturalWidth,
+        imgNaturalHeight,
+        minScale: Math.max(minScale, 1.0),
+        maxScale: 3.0
+      };
+    }
+
+    // Apply transform to image
+    function applyTransform() {
+      photoImg.style.transform = `scale(${scale}) translate(${translateX}px, ${translateY}px)`;
+    }
+
+    // Clamp translations to keep image within bounds
+    function clampTranslations() {
+      const constraints = getConstraints();
+      const scaledWidth = constraints.imgNaturalWidth * scale;
+      const scaledHeight = constraints.imgNaturalHeight * scale;
+      const containerWidth = constraints.containerRect.width;
+      const containerHeight = constraints.containerRect.height;
+
+      // Calculate maximum translation before edges become visible
+      const maxTransX = Math.max(0, (scaledWidth - containerWidth) / 2 / scale);
+      const maxTransY = Math.max(0, (scaledHeight - containerHeight) / 2 / scale);
+
+      translateX = Math.max(-maxTransX, Math.min(maxTransX, translateX));
+      translateY = Math.max(-maxTransY, Math.min(maxTransY, translateY));
+    }
+
+    // Mouse wheel zoom
+    photoContainer.addEventListener('wheel', function(e) {
+      e.preventDefault();
+
+      const delta = -e.deltaY * 0.001;
+      const constraints = getConstraints();
+
+      scale = Math.max(constraints.minScale, Math.min(constraints.maxScale, scale + delta));
+      clampTranslations();
+      applyTransform();
+    }, { passive: false });
+
+    // Touch pinch zoom
+    let lastTouchDistance = 0;
+
+    photoContainer.addEventListener('touchstart', function(e) {
+      if (e.touches.length === 2) {
+        const dx = e.touches[0].clientX - e.touches[1].clientX;
+        const dy = e.touches[0].clientY - e.touches[1].clientY;
+        lastTouchDistance = Math.sqrt(dx * dx + dy * dy);
+      }
+    });
+
+    photoContainer.addEventListener('touchmove', function(e) {
+      if (e.touches.length === 2) {
+        e.preventDefault();
+
+        const dx = e.touches[0].clientX - e.touches[1].clientX;
+        const dy = e.touches[0].clientY - e.touches[1].clientY;
+        const distance = Math.sqrt(dx * dx + dy * dy);
+
+        if (lastTouchDistance > 0) {
+          const delta = (distance - lastTouchDistance) * 0.01;
+          const constraints = getConstraints();
+
+          scale = Math.max(constraints.minScale, Math.min(constraints.maxScale, scale + delta));
+          clampTranslations();
+          applyTransform();
+        }
+
+        lastTouchDistance = distance;
+      }
+    }, { passive: false });
+
+    // Drag to translate
+    let isDragging = false;
+    let startX, startY;
+    let startTranslateX, startTranslateY;
+
+    photoContainer.addEventListener('mousedown', function(e) {
+      e.preventDefault(); // Prevent default image drag
+      isDragging = true;
+      startX = e.clientX;
+      startY = e.clientY;
+      startTranslateX = translateX;
+      startTranslateY = translateY;
+    });
+
+    photoContainer.addEventListener('touchstart', function(e) {
+      if (e.touches.length === 1) {
+        isDragging = true;
+        startX = e.touches[0].clientX;
+        startY = e.touches[0].clientY;
+        startTranslateX = translateX;
+        startTranslateY = translateY;
+      }
+    });
+
+    document.addEventListener('mousemove', function(e) {
+      if (!isDragging) return;
+
+      const dx = (e.clientX - startX) / scale;
+      const dy = (e.clientY - startY) / scale;
+
+      translateX = startTranslateX + dx;
+      translateY = startTranslateY + dy;
+
+      clampTranslations();
+      applyTransform();
+    });
+
+    document.addEventListener('touchmove', function(e) {
+      if (!isDragging || e.touches.length !== 1) return;
+
+      const dx = (e.touches[0].clientX - startX) / scale;
+      const dy = (e.touches[0].clientY - startY) / scale;
+
+      translateX = startTranslateX + dx;
+      translateY = startTranslateY + dy;
+
+      clampTranslations();
+      applyTransform();
+    });
+
+    document.addEventListener('mouseup', function() {
+      isDragging = false;
+    });
+
+    document.addEventListener('touchend', function() {
+      isDragging = false;
+      lastTouchDistance = 0;
+    });
+
+    // Save function
+    window.savePhotoTransform = function() {
+      document.getElementById('save-scale').value = scale;
+      document.getElementById('save-translate-x').value = Math.round(translateX);
+      document.getElementById('save-translate-y').value = Math.round(translateY);
+
+      const form = document.getElementById('save-form');
+      const formData = new FormData(form);
+
+      fetch('{% url "board:save_photo_transform" %}', {
+        method: 'POST',
+        body: formData,
+        headers: {
+          'X-CSRFToken': formData.get('csrfmiddlewaretoken')
+        }
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.success) {
+          window.location.href = '?missionary_id={{ missionary.id }}';
+        } else {
+          alert('Error saving: ' + data.error);
+        }
+      })
+      .catch(error => {
+        alert('Error saving: ' + error);
+      });
+    };
+
+    // Cancel function
+    window.cancelPhotoEdit = function() {
+      scale = originalScale;
+      translateX = originalTranslateX;
+      translateY = originalTranslateY;
+      applyTransform();
+      window.location.href = '?missionary_id={{ missionary.id }}';
+    };
+  })();
 </script>
 {% endblock %}

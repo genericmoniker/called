@@ -56,6 +56,9 @@ class Missionary(models.Model):
     start_date = models.DateField()
     end_date = models.DateField()
     photo = models.ImageField(upload_to=_upload_to_path, blank=True, null=True)
+    photo_scale = models.FloatField(default=1.0)
+    photo_translate_x = models.IntegerField(default=0)
+    photo_translate_y = models.IntegerField(default=0)
 
     # Metadata
     created_by = models.ForeignKey("auth.User", on_delete=models.CASCADE)

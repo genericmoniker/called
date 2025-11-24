@@ -2,13 +2,15 @@ from datetime import date, timedelta
 
 from django.contrib.auth.decorators import login_required
 from django.db.models import Case, F, Q, QuerySet, When
-from django.http import HttpRequest, HttpResponse
+from django.http import HttpRequest, HttpResponse, JsonResponse
 from django.shortcuts import render
+from django.views.decorators.http import require_http_methods
 
 from apps.missionaries.models import Missionary
 
 PAGE_ITEM_COUNT = 6
 DAYS_AFTER_END_DATE = 30  # Keep missionaries on the board for this long after end date.
+MAX_PHOTO_SCALE = 3.0  # Maximum zoom level for photo editing
 
 
 @login_required
@@ -55,3 +57,61 @@ def _query_missionaries(offset: int) -> tuple[int, QuerySet[Missionary]]:
         ),
     )
     return queryset.count(), queryset[offset : offset + PAGE_ITEM_COUNT]
+
+
+@login_required
+@require_http_methods(["POST"])
+def save_photo_transform(request: HttpRequest) -> JsonResponse:
+    """Save photo transformation settings for a missionary.
+
+    Expects POST data with:
+    - missionary_id: ID of the missionary
+    - photo_scale: Scale factor (>= 1.0)
+    - photo_translate_x: X translation in pixels
+    - photo_translate_y: Y translation in pixels
+    """
+    try:
+        missionary_id = request.POST.get("missionary_id")
+        if not missionary_id:
+            return JsonResponse(
+                {"success": False, "error": "Missing missionary_id"},
+                status=400,
+            )
+
+        missionary = Missionary.objects.get(id=missionary_id)
+
+        # Parse and validate transformation values
+        try:
+            scale = float(request.POST.get("photo_scale", 1.0))
+            translate_x = int(request.POST.get("photo_translate_x", 0))
+            translate_y = int(request.POST.get("photo_translate_y", 0))
+        except (ValueError, TypeError) as e:
+            return JsonResponse(
+                {"success": False, "error": f"Invalid values: {e}"},
+                status=400,
+            )
+
+        # Validate scale (minimum 1.0, maximum 3.0)
+        if scale < 1.0 or scale > MAX_PHOTO_SCALE:
+            return JsonResponse(
+                {
+                    "success": False,
+                    "error": f"Scale must be between 1.0 and {MAX_PHOTO_SCALE}",
+                },
+                status=400,
+            )
+
+        # Update missionary
+        missionary.photo_scale = scale
+        missionary.photo_translate_x = translate_x
+        missionary.photo_translate_y = translate_y
+        missionary.save()
+
+        return JsonResponse({"success": True})
+
+    except Missionary.DoesNotExist:
+        return JsonResponse(
+            {"success": False, "error": "Missionary not found"}, status=404
+        )
+    except Exception as e:  # noqa: BLE001
+        return JsonResponse({"success": False, "error": str(e)}, status=500)

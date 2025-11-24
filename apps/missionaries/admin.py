@@ -1,6 +1,8 @@
 from django.contrib import admin
 from django.forms import ModelForm
 from django.http import HttpRequest
+from django.urls import reverse
+from django.utils.html import format_html
 
 from .models import Missionary, Ward
 
@@ -28,6 +30,7 @@ class MissionaryAdmin(admin.ModelAdmin):
         "wife_last_name",
         "mission",
     )
+    readonly_fields = ("photo_edit_link",)
     fieldsets = (
         (
             None,
@@ -39,6 +42,7 @@ class MissionaryAdmin(admin.ModelAdmin):
                     "start_date",
                     "end_date",
                     "photo",
+                    "photo_edit_link",
                 ),
             },
         ),
@@ -75,3 +79,14 @@ class MissionaryAdmin(admin.ModelAdmin):
         if not change:
             obj.created_by = request.user
         super().save_model(request, obj, form, change)
+
+    def photo_edit_link(self, obj: Missionary) -> str:
+        """Display a link to edit the photo positioning."""
+        if obj.pk and obj.photo:
+            url = reverse("board:preview") + f"?missionary_id={obj.pk}&edit=1"
+            return format_html(
+                '<a href="{}" target="_blank">Edit Photo</a>', url
+            )
+        return "Save missionary with a photo first"
+
+    photo_edit_link.short_description = "Photo Editor"  # type: ignore[attr-defined]

@@ -6,7 +6,8 @@
     {% for missionary in missionaries %}
     <div class="card">
         <div class="photo">
-            <img src="{{ missionary.photo_url }}">
+            <img src="{{ missionary.photo_url }}"
+                 style="transform: scale({{ missionary.photo_scale }}) translate({{ missionary.photo_translate_x }}px, {{ missionary.photo_translate_y }}px); transform-origin: center;">
         </div>
         <div class="info">
             <p class="name">{{missionary}}</p>
