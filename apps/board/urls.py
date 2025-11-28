@@ -6,6 +6,7 @@ app_name = "board"
 
 urlpatterns = [
     path("", views.index, name="index"),
+    path("service-worker.js", views.service_worker, name="service_worker"),
     path("preview/", views.preview, name="preview"),
     path("preview/save/", views.save_photo_transform, name="save_photo_transform"),
 ]

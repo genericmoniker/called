@@ -121,7 +121,7 @@ AUTH_PASSWORD_VALIDATORS = [
 # Session settings
 # So long as the board page is making requests, the session will persist indefinitely.
 SESSION_SAVE_EVERY_REQUEST = True
-SESSION_COOKIE_AGE = timedelta(days=7).total_seconds()
+SESSION_COOKIE_AGE = timedelta(days=30).total_seconds()
 
 
 # Internationalization

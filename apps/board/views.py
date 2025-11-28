@@ -1,4 +1,5 @@
 from datetime import date, timedelta
+from pathlib import Path
 
 from django.contrib.auth.decorators import login_required
 from django.db.models import Case, F, Q, QuerySet, When
@@ -115,3 +116,15 @@ def save_photo_transform(request: HttpRequest) -> JsonResponse:
         )
     except Exception as e:  # noqa: BLE001
         return JsonResponse({"success": False, "error": str(e)}, status=500)
+
+
+def service_worker(_request: HttpRequest) -> HttpResponse:
+    """Serve the service worker JavaScript file.
+
+    Service workers need to be served from the same path or above the scope
+    they control. We serve it from /board/service-worker.js so it can control
+    the /board/ scope.
+    """
+    sw_path = Path(__file__).parent / "service-worker.js"
+    content = sw_path.read_text()
+    return HttpResponse(content, content_type="application/javascript")
