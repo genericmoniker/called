@@ -1,0 +1,11 @@
+# Copy to ~/.config/autostart/
+# https://specifications.freedesktop.org/desktop-entry/latest/recognized-keys.html
+
+[Desktop Entry]
+Name=Firefox
+Type=Application
+Exec=firefox -kiosk -private-window https://replace-with-called-url.com/board
+Hidden=false
+NoDisplay=false
+X-GNOME-Autostart-enabled=true
+Comment=Firefox in kiosk mode
