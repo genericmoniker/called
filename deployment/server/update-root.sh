@@ -50,3 +50,13 @@ fi
 # Configure firewall (idempotent - ufw handles this gracefully)
 ufw allow 80/tcp   # Allow HTTP (needed for certbot)
 ufw allow 443/tcp  # Allow HTTPS
+
+# Set proper permissions on media directory so that nginx can serve the files.
+# Otherwise, we'll get 403 Forbidden errors.
+MEDIA_DIR="/home/app-user/called/instance/media/"
+mkdir -p "$MEDIA_DIR"
+chown -R app-user:app-user "$MEDIA_DIR"
+chmod -R 755 "$MEDIA_DIR"
+for dir in /home/app-user{,/called{,/instance{,/media{,/missionaries{,/photos}}}}}; do
+    chmod o+x "$dir"
+done
