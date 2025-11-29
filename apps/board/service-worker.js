@@ -85,7 +85,12 @@ async function networkFirstStrategy(request) {
     try {
         const networkResponse = await fetch(request);
 
-        // Only cache successful responses
+        // If server returns 5xx (e.g., 504), treat it like a network failure and fall back
+        if (!networkResponse.ok && networkResponse.status >= 500) {
+            throw new Error(`Server error ${networkResponse.status}`);
+        }
+
+        // Only cache successful responses (2xx)
         if (networkResponse.ok) {
             const cache = await caches.open(CACHE_NAME);
             cache.put(request, networkResponse.clone());
@@ -93,7 +98,7 @@ async function networkFirstStrategy(request) {
 
         return networkResponse;
     } catch (error) {
-        console.log('[ServiceWorker] Network failed, serving from cache:', request.url);
+        console.log('[ServiceWorker] Network/server failed, serving from cache:', request.url, error?.message);
         const cachedResponse = await caches.match(request);
 
         if (cachedResponse) {
@@ -113,7 +118,7 @@ async function networkFirstStrategy(request) {
             <head>
                 <meta charset="utf-8">
                 <meta name="viewport" content="width=device-width, initial-scale=1">
-                <title>Offline - Missionaries</title>
+                <title>Offline / Server Busy - Missionaries</title>
                 <style>
                     body {
                         background-color: #1a1a1a;
@@ -136,22 +141,15 @@ async function networkFirstStrategy(request) {
             </head>
             <body>
                 <div class="message">
-                    <h1>📡 Offline</h1>
-                    <p>Unable to load the board. Please check your internet connection.</p>
-                    <p>The page will automatically reload when connection is restored.</p>
+                    <h1>📡 Offline / Server Busy</h1>
+                    <p>The board is unavailable right now. We'll keep trying and reload automatically when the server responds.</p>
                 </div>
                 <script>
                     // Periodically check for network connectivity
-                    function checkConnection() {
+                    function retry() {
                         fetch('/board/', { method: 'HEAD', cache: 'no-store' })
-                            .then(() => {
-                                // Connection restored, reload the page
-                                window.location.reload();
-                            })
-                            .catch(() => {
-                                // Still offline, check again in 5 seconds
-                                setTimeout(checkConnection, 5000);
-                            });
+                            .then(() => window.location.reload())
+                            .catch(() => setTimeout(retry, 5000));
                     }
 
                     // Also listen for online event
@@ -160,7 +158,7 @@ async function networkFirstStrategy(request) {
                     });
 
                     // Start checking
-                    setTimeout(checkConnection, 5000);
+                    setTimeout(retry, 5000);
                 </script>
             </body>
             </html>`,
