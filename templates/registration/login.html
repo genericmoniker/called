@@ -34,6 +34,11 @@
                             {{ form.username|add_class:"input w-full" }}
                             <label class="label">Password</label>
                             {{ form.password|add_class:"input w-full" }}
+                            <label class="label cursor-pointer justify-start gap-2 mt-2">
+                                <input type="checkbox" class="checkbox checkbox-sm" id="show-password">
+                                <span class="label-text">Show password</span>
+                            </label>
+                            <br>
                             <div><a href="{% url 'password_reset' %}" class="link link-hover">Forgot password?</a></div>
                             <button type="submit" value="login" class="btn btn-neutral mt-4">Login</button>
                         </fieldset>
@@ -45,5 +50,12 @@
         </div>
     </div>
 </div>
+
+<script>
+    document.getElementById('show-password').addEventListener('change', function() {
+        const passwordInput = document.getElementById('id_password');
+        passwordInput.type = this.checked ? 'text' : 'password';
+    });
+</script>
 
 {% endblock %}
