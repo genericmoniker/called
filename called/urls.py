@@ -16,17 +16,28 @@ Including another URLconf
 
 """
 
+from typing import NoReturn
+
 from django.conf import settings
 from django.conf.urls.static import static
 from django.contrib import admin
+from django.http import HttpRequest
 from django.urls import include, path
 
 admin.site.site_header = "Called"
 admin.site.site_title = "Called administration"
 
+
+def trigger_error(request: HttpRequest) -> NoReturn:  # noqa: ARG001
+    """Trigger a test error to verify Sentry is working."""
+    _division_by_zero = 1 / 0
+    raise ValueError  # Unreachable, just for type checker.
+
+
 urlpatterns = [  # noqa: RUF005
     path("admin/", admin.site.urls),
     path("board/", include("apps.board.urls")),
     path("accounts/", include("django.contrib.auth.urls")),
+    path("sentry-test/", trigger_error),
     # For serving media files during development:
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

@@ -54,6 +54,7 @@ class Config:
     digitalocean_token: str
     cloudflare_zone_id: str
     cloudflare_api_token: str
+    sentry_dsn: str
 
     @classmethod
     def from_env(cls) -> "Config":
@@ -67,6 +68,7 @@ class Config:
             digitalocean_token=cls._get_env("DIGITALOCEAN_TOKEN"),
             cloudflare_zone_id=cls._get_env("CLOUDFLARE_ZONE_ID"),
             cloudflare_api_token=cls._get_env("CLOUDFLARE_API_TOKEN"),
+            sentry_dsn=cls._get_env("SENTRY_DSN"),
         )
 
     @staticmethod
@@ -103,6 +105,7 @@ def create_server(config: Config) -> str:
         domain_name=config.domain_name,
         secret_key=config.secret_key,
         admin_email=config.admin_email,
+        sentry_dsn=config.sentry_dsn,
     )
 
     req = {

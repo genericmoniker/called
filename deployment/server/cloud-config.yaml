@@ -8,6 +8,7 @@
 
 # This file is a template. Curly brace values are replaced with a call to
 # Python's str.format before this file is sent to the cloud-init service.
+# Look for the "Replace placeholders" comment in deployment/server/do-deploy.py.
 
 users:
   - name: root
@@ -28,13 +29,14 @@ packages:
 
 write_files:
   # Create the production.env file for the Django application.
-  # This is referenced by the systemd service file.
+  # This .env file is referenced by the systemd service file.
   - path: /var/opt/called/production.env
     permissions: '600'
     content: |
       DJANGO_DEBUG=False
       DJANGO_ALLOWED_HOSTS={domain_name}
       DJANGO_SECRET_KEY={secret_key}
+      SENTRY_DSN={sentry_dsn}
 
 runcmd:
   # Try to get journald to use the correct /etc/machine-id file.
