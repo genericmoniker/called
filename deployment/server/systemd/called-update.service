@@ -1,0 +1,6 @@
+[Unit]
+Description=Called Application Update Service
+
+[Service]
+Type=oneshot
+ExecStart=%h/called/deployment/server/systemd/called-update.sh

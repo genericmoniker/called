@@ -21,3 +21,10 @@ uv run manage.py migrate
 
 # Collect static files
 uv run manage.py collectstatic --noinput
+
+# Install/update systemd service
+mkdir -p ~/.config/systemd/user
+cp ./deployment/server/systemd/*.service ~/.config/systemd/user/
+cp ./deployment/server/systemd/*.timer ~/.config/systemd/user/
+systemctl --user daemon-reload
+systemctl --user enable --now called-update.timer
