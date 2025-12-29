@@ -11,10 +11,8 @@ exec 2> >(logger --tag called-update --priority user.error)
 
 echo "Starting update check..."
 
-# Ensure the script is run from the correct directory
+# Run from the deployment/server directory
 cd "$(dirname "$0")/.."
-
-echo "Current directory: $(pwd)"
 
 current_hash=$(git rev-parse HEAD)
 latest_hash=$(git ls-remote origin -h refs/heads/main | cut -f1)
