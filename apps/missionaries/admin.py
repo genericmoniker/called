@@ -35,26 +35,17 @@ class MissionaryAdmin(admin.ModelAdmin):
         (
             None,
             {
-                "fields": (
-                    "type",
-                    "ward",
-                    "mission",
-                    "start_date",
-                    "end_date",
-                    "photo",
-                    "photo_edit_link",
-                ),
+                "fields": ("type",),
             },
         ),
         (
-            "Single Missionary",
+            "Name (Single Missionary)",
             {
                 "fields": ("first_name", "last_name"),
-                "classes": ("collapse",),
             },
         ),
         (
-            "Couple Missionaries",
+            "Name (Couple Missionaries)",
             {
                 "fields": (
                     "husband_first_name",
@@ -62,7 +53,19 @@ class MissionaryAdmin(admin.ModelAdmin):
                     "wife_first_name",
                     "wife_last_name",
                 ),
-                "classes": ("collapse",),
+            },
+        ),
+        (
+            "Details",
+            {
+                "fields": (
+                    "ward",
+                    "mission",
+                    "start_date",
+                    "end_date",
+                    "photo",
+                    "photo_edit_link",
+                ),
             },
         ),
     )
@@ -84,9 +87,7 @@ class MissionaryAdmin(admin.ModelAdmin):
         """Display a link to edit the photo positioning."""
         if obj.pk and obj.photo:
             url = reverse("board:preview") + f"?missionary_id={obj.pk}&edit=1"
-            return format_html(
-                '<a href="{}" target="_blank">Edit Photo</a>', url
-            )
+            return format_html('<a href="{}" target="_blank">Edit Photo</a>', url)
         return "Save missionary with a photo first"
 
     photo_edit_link.short_description = "Photo Editor"  # type: ignore[attr-defined]
