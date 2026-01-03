@@ -18,6 +18,7 @@ from datetime import timedelta
 from pathlib import Path
 
 import sentry_sdk
+from sentry_sdk.types import Event, Hint
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -162,6 +163,29 @@ STORAGES = {
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
+
+def filter_sentry_events(event: Event, hint: Hint) -> Event | None:  # noqa: ARG001
+    """Filter out events that should not be sent to Sentry.
+
+    Note that Sentry also has inbound data filters, but filtering client-side
+    before sending the event to Sentry has two advantages:
+
+    1. It reduces traffic to Sentry.
+    2. Inbound data filters require a paid Sentry plan.
+
+    :return: The event (potentially changed) to send to Sentry, or None to drop the
+        event.
+    """
+    message = str(event.get("logentry", {}).get("message", ""))
+
+    # Ignore Invalid HTTP_HOST errors (scanners using IP addresses instead of the domain
+    # name, such as looking for Cisco VPN login pages observed 2026-01-03).
+    if "Invalid HTTP_HOST header" in message:
+        return None
+
+    return event
+
+
 SENTRY_DSN = os.environ.get("SENTRY_DSN")
 if SENTRY_DSN:
     sentry_sdk.init(
@@ -170,4 +194,5 @@ if SENTRY_DSN:
         # see https://docs.sentry.io/platforms/python/data-management/data-collected/
         # for more info
         send_default_pii=True,
+        before_send=filter_sentry_events,
     )
