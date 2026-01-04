@@ -18,6 +18,7 @@ from datetime import timedelta
 from pathlib import Path
 
 import sentry_sdk
+from django.core.exceptions import DisallowedHost
 from sentry_sdk.types import Event, Hint
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -164,7 +165,7 @@ STORAGES = {
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 
-def filter_sentry_events(event: Event, hint: Hint) -> Event | None:  # noqa: ARG001
+def filter_sentry_events(event: Event, hint: Hint) -> Event | None:
     """Filter out events that should not be sent to Sentry.
 
     Note that Sentry also has inbound data filters, but filtering client-side
@@ -176,12 +177,12 @@ def filter_sentry_events(event: Event, hint: Hint) -> Event | None:  # noqa: ARG
     :return: The event (potentially changed) to send to Sentry, or None to drop the
         event.
     """
-    message = str(event.get("logentry", {}).get("message", ""))
-
-    # Ignore Invalid HTTP_HOST errors (scanners using IP addresses instead of the domain
-    # name, such as looking for Cisco VPN login pages observed 2026-01-03).
-    if "Invalid HTTP_HOST header" in message:
-        return None
+    if "exc_info" in hint:
+        exc_type, exc_value, tb = hint["exc_info"]
+        # Ignore Invalid HTTP_HOST errors (scanners using IP addresses instead of the
+        # domain name, such as looking for Cisco VPN login pages observed 2026-01-03).
+        if exc_type is DisallowedHost:
+            return None
 
     return event
 
