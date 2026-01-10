@@ -123,6 +123,12 @@ class Missionary(models.Model):
                 "Single missionaries must have first and last names.",
             )
 
+        # Reset photo edits if no photo is present.
+        if not self.photo:
+            self.photo_scale = 1.0
+            self.photo_translate_x = 0
+            self.photo_translate_y = 0
+
 
 def _format_date(date: date) -> str:
     """Format a date as 'Month Year', like 'January 2026'."""
