@@ -43,15 +43,11 @@ html, body {
 
 /* Photo editor styles */
 .photo-editor-controls {
-  display: none;
+  display: flex;
   text-align: center;
   margin-top: 1rem;
   gap: 1rem;
   justify-content: center;
-}
-
-.photo-editor-controls.active {
-  display: flex;
 }
 
 .photo-editable {
@@ -66,11 +62,60 @@ html, body {
   user-select: none;
   pointer-events: none;
 }
+
+/* Toast notification styles */
+.toast {
+  position: fixed;
+  z-index: 9999;
+  pointer-events: none;
+}
+
+.toast-top {
+  top: 1rem;
+}
+
+.toast-center {
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.alert {
+  padding: 1rem 1.5rem;
+  border-radius: 0.5rem;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  pointer-events: auto;
+  animation: slideDown 0.3s ease-out;
+}
+
+.alert-success {
+  background-color: #10b981;
+  color: white;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-1rem);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
 </style>
 {% endblock %}
 
 {% block content %}
+
+{% if request.GET.edit == '1' %}
+<h1>Photo Edit</h1>
+{% else %}
 <h1>Preview</h1>
+{% endif %}
+
 <div class="preview-card-outer">
   <div class="preview-card-inner">
     <div class="card" id="preview-card">
@@ -89,13 +134,16 @@ html, body {
     </div>
   </div>
 </div>
-<div class="preview-ok-btn">
-  <button onclick="window.close()">OK</button>
-</div>
+{% if request.GET.edit == '1' %}
 <div class="photo-editor-controls" id="editor-controls">
   <button onclick="savePhotoTransform()" class="btn btn-primary">Save</button>
   <button onclick="cancelPhotoEdit()" class="btn">Cancel</button>
 </div>
+{% else %}
+<div class="preview-ok-btn">
+  <button onclick="window.close()">OK</button>
+</div>
+{% endif %}
 
 <form id="save-form" method="post" style="display: none;">
   {% csrf_token %}
@@ -104,6 +152,12 @@ html, body {
   <input type="hidden" name="photo_translate_x" id="save-translate-x">
   <input type="hidden" name="photo_translate_y" id="save-translate-y">
 </form>
+
+<div class="toast toast-top toast-center" id="toast-container" style="display: none;">
+  <div class="alert alert-success">
+    <span>Photo edits saved successfully!</span>
+  </div>
+</div>
 
 <script>
   // WYSIWYG scaling: scale the card to fit the wrapper
@@ -124,10 +178,9 @@ html, body {
 
   // Photo editor functionality
   (function() {
-    const urlParams = new URLSearchParams(window.location.search);
-    const editMode = urlParams.get('edit') === '1';
-
-    if (!editMode) return;
+    {% if request.GET.edit != '1' %}
+    return; // Not in edit mode
+    {% endif %}
 
     const photoContainer = document.getElementById('photo-container');
     const photoImg = document.getElementById('photo-img');
@@ -145,7 +198,6 @@ html, body {
 
     // Enable edit mode
     photoContainer.classList.add('photo-editable');
-    editorControls.classList.add('active');
 
     // Get container and image dimensions
     function getConstraints() {
@@ -320,7 +372,12 @@ html, body {
       .then(response => response.json())
       .then(data => {
         if (data.success) {
-          window.location.href = '?missionary_id={{ missionary.id }}';
+          // Show toast notification
+          const toast = document.getElementById('toast-container');
+          toast.style.display = 'block';
+
+          // Close after brief delay
+          setTimeout(() => window.close(), 2000);
         } else {
           alert('Error saving: ' + data.error);
         }
@@ -336,7 +393,7 @@ html, body {
       translateX = originalTranslateX;
       translateY = originalTranslateY;
       applyTransform();
-      window.location.href = '?missionary_id={{ missionary.id }}';
+      window.close();
     };
   })();
 </script>

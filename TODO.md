@@ -8,7 +8,7 @@
 - [x] Sentry
 - [ ] Real favicon.ico (instead of 1 pixel image)
 - [ ] Backup script for the instance directory
-- [ ] UI for preview/photo edit is a little rough
+- [x] UI for preview/photo edit is a little rough
 - [ ] When clearing a photo, clear edits too (or they show for default image)
 - [ ] 500 Error (adding previously cleared and edited photo), not seeing
     adequate logs
