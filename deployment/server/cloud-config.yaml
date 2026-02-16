@@ -2,27 +2,20 @@
 
 # Automatic server configuration using cloud-init.
 # Documentation: https://cloudinit.readthedocs.io/en/latest/
+# Github repo: https://github.com/canonical/cloud-init
+# Directives run in a (non-obvious, poorly documented) pre-defined order and
+# I've tried to order this file to match.
+
 # Server logs at:
 # /var/log/cloud-init.log
 # /var/log/cloud-init-output.log
+
 # Schema validation on the server with:
 # cloud-init schema --system
 
 # This file is a template. Curly brace values are replaced with a call to
 # Python's str.format before this file is sent to the cloud-init service.
-# Look for the "Replace placeholders" comment in deployment/server/do-deploy.py.
-
-users:
-  - name: root
-    # Disable password-based login for root (being verbose; this is the default for cloud-init).
-    lock_passwd: true
-
-  - name: app-user
-    gecos: Application User
-    lock_passwd: true
-    shell: /bin/bash
-    ssh_authorized_keys:
-      - {app_user_ssh_key}
+# See the "Replace placeholders" comment in deployment/server/do-deploy.py.
 
 package_update: true
 package_upgrade: true
@@ -38,13 +31,24 @@ write_files:
   # Create the production.env file for the Django application.
   # This .env file is referenced by the systemd service file.
   - path: /home/app-user/.config/called/production.env
-    owner: app-user:app-user
     permissions: '600'
     content: |
       DJANGO_DEBUG=False
       DJANGO_ALLOWED_HOSTS={domain_name}
       DJANGO_SECRET_KEY={secret_key}
       SENTRY_DSN={sentry_dsn}
+
+users:
+  - name: root
+    # Disable password-based login for root (being verbose; this is the default for cloud-init).
+    lock_passwd: true
+
+  - name: app-user
+    gecos: Application User
+    lock_passwd: true
+    shell: /bin/bash
+    ssh_authorized_keys:
+      - {app_user_ssh_key}
 
 runcmd:
   # Fix ownership of directories created by write_files.
