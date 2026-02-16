@@ -8,6 +8,7 @@
     {% load static %}
     <link rel="icon" href="{% static 'favicon.ico' %}" type="image/x-icon" />
     <link href="{% static 'board/static/board.css' %}" rel="stylesheet">
+    <script src="{% static 'board/static/cursor-hide.js' %}"></script>
     {% if next_url %}
     <meta http-equiv="refresh" content="30; url={{ next_url }}">
     {% endif %}

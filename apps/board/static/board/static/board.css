@@ -139,3 +139,7 @@ body {
         opacity: 0;
     }
 }
+
+.hide-cursor {
+    cursor: none;
+}
