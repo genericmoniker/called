@@ -30,4 +30,7 @@ mkdir -p ~/.config/systemd/user
 cp ./deployment/server/systemd/*.service ~/.config/systemd/user/
 cp ./deployment/server/systemd/*.timer ~/.config/systemd/user/
 systemctl --user daemon-reload
-systemctl --user enable --now called-update.timer
+systemctl --user enable called.service
+systemctl --user enable called-update.timer
+systemctl --user restart called.service
+systemctl --user restart called-update.timer

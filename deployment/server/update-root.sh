@@ -19,11 +19,16 @@ REPO_DIR="/home/app-user/called"
 # Configure nginx (idempotent)
 src_nginx_conf="$REPO_DIR/deployment/server/called-nginx.conf"
 dst_nginx_conf="/etc/nginx/sites-available/called"
+tmp_nginx_conf="$(mktemp)"
 
-if [ ! -f /etc/nginx/sites-available/called ]; then
-    cp "$src_nginx_conf" "$dst_nginx_conf"
-    sed -i "s/{domain_name}/$DOMAIN_NAME/g" "$dst_nginx_conf"  # Replace placeholder with actual domain name.
+cp "$src_nginx_conf" "$tmp_nginx_conf"
+sed -i "s/{domain_name}/$DOMAIN_NAME/g" "$tmp_nginx_conf"
+if ! cmp -s "$tmp_nginx_conf" "$dst_nginx_conf"; then
+    install -m 644 "$tmp_nginx_conf" "$dst_nginx_conf"
+    nginx -t
+    systemctl reload nginx
 fi
+rm -f "$tmp_nginx_conf"
 
 # Enable site if not already enabled
 if [ ! -L /etc/nginx/sites-enabled/called ]; then
