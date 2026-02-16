@@ -36,6 +36,8 @@ def main() -> None:
         print("Further on-server provisioning will take a few minutes to complete.")
         print("After connecting via ssh, you can monitor progress with:")
         print("tail -f /var/log/cloud-init-output.log")
+        print()
+        print("⚠️ Redeploying 5+ times in a week will cause certbot to rate limit!")
     except Exception as e:  # noqa: BLE001
         print(f"❌ Error: {e}")
         print()

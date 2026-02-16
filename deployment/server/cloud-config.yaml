@@ -70,6 +70,9 @@ runcmd:
   - /home/app-user/called/deployment/server/update-root.sh {domain_name}
 
   # Obtain and install SSL certificates using Certbot.
+  # Beware of Certbot rate limits if you redeploy many times in a short period!
+  # See https://letsencrypt.org/docs/rate-limits/
+  # Add --test-cert to get a staging certificate that doesn't count against rate limits while testing.
   - certbot --nginx -d {domain_name} -n --agree-tos -m {admin_email}
 
 final_message: "The server setup is complete (cloud-config.yaml done)."
