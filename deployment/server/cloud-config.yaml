@@ -31,7 +31,8 @@ packages:
 write_files:
   # Create the production.env file for the Django application.
   # This .env file is referenced by the systemd service file.
-  - path: /var/opt/called/production.env
+  - path: /home/app-user/.config/called/production.env
+    owner: app-user:app-user
     permissions: '600'
     content: |
       DJANGO_DEBUG=False
@@ -58,4 +59,4 @@ runcmd:
   # Obtain and install SSL certificates using Certbot.
   - certbot --nginx -d {domain_name} -n --agree-tos -m {admin_email}
 
-final_message: "The server setup is complete."
+final_message: "The server setup is complete (cloud-config.yaml done)."
