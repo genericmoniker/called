@@ -17,6 +17,10 @@ users:
 
   - name: app-user
     gecos: Application User
+    lock_passwd: true
+    shell: /bin/bash
+    authorized_keys:
+      - {app_user_ssh_key}
 
 package_update: true
 package_upgrade: true
@@ -41,6 +45,9 @@ write_files:
       SENTRY_DSN={sentry_dsn}
 
 runcmd:
+  # Fix ownership of directories created by write_files.
+  - chown -R app-user:app-user /home/app-user/.config
+
   # Try to get journald to use the correct /etc/machine-id file.
   # Otherwise journalctl will say, "No journal files were found" despite logs being present.
   - systemd-machine-id-setup

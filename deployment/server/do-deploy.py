@@ -51,6 +51,7 @@ class Config:
     droplet_size: str
     secret_key: str
     root_ssh_key: str
+    app_user_ssh_key: str
     digitalocean_token: str
     cloudflare_zone_id: str
     cloudflare_api_token: str
@@ -65,6 +66,7 @@ class Config:
             droplet_size=cls._get_env("SERVER_DROPLET_SIZE"),
             secret_key=cls._get_env("DJANGO_SECRET_KEY"),
             root_ssh_key=cls._get_env("SERVER_ROOT_SSH_KEY_FINGERPRINT", ""),
+            app_user_ssh_key=cls._get_env("SERVER_APP_USER_SSH_KEY"),
             digitalocean_token=cls._get_env("DIGITALOCEAN_TOKEN"),
             cloudflare_zone_id=cls._get_env("CLOUDFLARE_ZONE_ID"),
             cloudflare_api_token=cls._get_env("CLOUDFLARE_API_TOKEN"),
@@ -103,6 +105,7 @@ def create_server(config: Config) -> str:
     # Replace placeholders in cloud-config with actual values.
     cloud_config = cloud_config_path.read_text().format(
         domain_name=config.domain_name,
+        app_user_ssh_key=config.app_user_ssh_key,
         secret_key=config.secret_key,
         admin_email=config.admin_email,
         sentry_dsn=config.sentry_dsn,
