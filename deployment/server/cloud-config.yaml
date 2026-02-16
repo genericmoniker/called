@@ -5,6 +5,8 @@
 # Server logs at:
 # /var/log/cloud-init.log
 # /var/log/cloud-init-output.log
+# Schema validation on the server with:
+# cloud-init schema --system
 
 # This file is a template. Curly brace values are replaced with a call to
 # Python's str.format before this file is sent to the cloud-init service.
@@ -19,7 +21,7 @@ users:
     gecos: Application User
     lock_passwd: true
     shell: /bin/bash
-    authorized_keys:
+    ssh_authorized_keys:
       - {app_user_ssh_key}
 
 package_update: true
@@ -46,7 +48,7 @@ write_files:
 
 runcmd:
   # Fix ownership of directories created by write_files.
-  - chown -R app-user:app-user /home/app-user/.config
+  - chown -R app-user:app-user /home/app-user
 
   # Try to get journald to use the correct /etc/machine-id file.
   # Otherwise journalctl will say, "No journal files were found" despite logs being present.
