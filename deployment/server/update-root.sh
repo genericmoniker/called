@@ -2,7 +2,11 @@
 
 # Update the application in production (run as root).
 # This script should be idempotent.
+# Look on the server for /var/log/cloud-init-output.log to see the output of this script.
 set -euox pipefail
+
+echo "------------------------------ update-root.sh ------------------------------"
+
 
 DOMAIN_NAME="$1"
 if [ -z "$DOMAIN_NAME" ]; then
@@ -11,22 +15,6 @@ if [ -z "$DOMAIN_NAME" ]; then
 fi
 
 REPO_DIR="/home/app-user/called"
-
-# Install systemd units if not already installed or updated.
-for unit_file in "$REPO_DIR/deployment/server/systemd"/*; do
-    if [ -f "$unit_file" ]; then
-        unit_name=$(basename "$unit_file")
-        dest_file="/etc/systemd/system/$unit_name"
-
-        # Install if doesn't exist or source is newer
-        if [ ! -f "$dest_file" ] || [ "$unit_file" -nt "$dest_file" ]; then
-            cp "$unit_file" "$dest_file"
-            systemctl daemon-reload
-            systemctl enable --now "$unit_name"
-            echo "Installed and enabled $unit_name"
-        fi
-    fi
-done
 
 # Configure nginx (idempotent)
 src_nginx_conf="$REPO_DIR/deployment/server/called-nginx.conf"

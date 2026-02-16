@@ -1,8 +1,11 @@
 #!/bin/bash
 
 # Update the application in production (run as app-user).
+# Look on the server for /var/log/cloud-init-output.log to see the output of this script.
 
 set -euox pipefail
+
+echo "------------------------------ update-app-user.sh ------------------------------"
 
 # Install uv if not already installed
 curl -LsSf https://astral.sh/uv/install.sh | sh

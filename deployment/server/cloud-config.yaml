@@ -12,7 +12,8 @@
 
 users:
   - name: root
-    lock_passwd: true           # Disable password-based login for root.
+    # Disable password-based login for root (being verbose; this is the default for cloud-init).
+    lock_passwd: true
 
   - name: app-user
     gecos: Application User
@@ -43,6 +44,9 @@ runcmd:
   # Otherwise journalctl will say, "No journal files were found" despite logs being present.
   - systemd-machine-id-setup
   - systemctl restart systemd-journald
+
+  # Enable lingering for app-user so systemd user services can run without a user session.
+  - loginctl enable-linger app-user
 
   # Clone the repository as app-user.
   - su - app-user -c 'git clone https://github.com/genericmoniker/called.git $HOME/called'
