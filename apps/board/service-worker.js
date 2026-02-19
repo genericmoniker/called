@@ -1,119 +1,98 @@
-// Service Worker for offline board functionality
-// Version: 1.0.0
+// Service Worker for offline support.
 
-const CACHE_VERSION = 'board-v1';
-const CACHE_NAME = `${CACHE_VERSION}-cache`;
+// Update the version part of the CACHE_NAME string to force clients to update
+// their cache when changes are made.
+const CACHE_NAME = 'board-v7';
 
-// Core assets to cache immediately on install
 const CORE_ASSETS = [
     '/board/',
     '/static/board/static/board.css',
-    '/static/img/elder.jpg',
-    '/static/img/sister.jpg',
-    '/static/img/couple.jpg',
-    '/static/img/empty.jpg',
+    '/static/board/static/board.js',
+    '/static/board/static/cursor.js',
+    '/static/img/elder.png',
+    '/static/img/sister.png',
+    '/static/img/couple.png',
 ];
 
-// Install event - pre-cache core assets
-self.addEventListener('install', event => {
-    console.log('[ServiceWorker] Installing...');
+self.addEventListener('install', (event) => {
     event.waitUntil(
         caches.open(CACHE_NAME)
-            .then(cache => {
-                console.log('[ServiceWorker] Pre-caching core assets');
-                return cache.addAll(CORE_ASSETS);
-            })
-            .then(() => {
-                console.log('[ServiceWorker] Skip waiting');
-                return self.skipWaiting();
-            })
-            .catch(err => {
-                console.error('[ServiceWorker] Pre-cache failed:', err);
-            })
+            .then((cache) => cache.addAll(CORE_ASSETS))
+            .then(() => self.skipWaiting())
     );
 });
 
-// Activate event - clean up old caches
-self.addEventListener('activate', event => {
-    console.log('[ServiceWorker] Activating...');
+self.addEventListener('activate', (event) => {
     event.waitUntil(
         caches.keys()
-            .then(cacheNames => {
-                return Promise.all(
-                    cacheNames
-                        .filter(cacheName => {
-                            return cacheName.startsWith('board-') && cacheName !== CACHE_NAME;
-                        })
-                        .map(cacheName => {
-                            console.log('[ServiceWorker] Deleting old cache:', cacheName);
-                            return caches.delete(cacheName);
-                        })
-                );
-            })
-            .then(() => {
-                console.log('[ServiceWorker] Claiming clients');
-                return self.clients.claim();
-            })
+            .then((cacheNames) => Promise.all(
+                cacheNames
+                    .filter((cacheName) => cacheName.startsWith('board-') && cacheName !== CACHE_NAME)
+                    .map((cacheName) => caches.delete(cacheName))
+            ))
+            .then(() => self.clients.claim())
     );
 });
 
-// Fetch event - serve from cache, fallback to network
-self.addEventListener('fetch', event => {
-    const { request } = event;
-    const url = new URL(request.url);
-
-    // Skip non-GET requests
+self.addEventListener('fetch', (event) => {
+    const request = event.request;
     if (request.method !== 'GET') {
         return;
     }
 
-    // Skip chrome-extension and other non-http(s) requests
-    if (!url.protocol.startsWith('http')) {
+    const url = new URL(request.url);
+    if (url.protocol !== 'http:' && url.protocol !== 'https:') {
         return;
     }
 
-    // Handle different types of requests
-    if (url.pathname.startsWith('/board/') || url.pathname.startsWith('/static/') || url.pathname.startsWith('/media/')) {
-        // All board-related requests: Network first, fallback to cache
-        event.respondWith(networkFirstStrategy(request));
+    const isBoardAsset =
+        url.pathname.startsWith('/board/') ||
+        url.pathname.startsWith('/static/') ||
+        url.pathname.startsWith('/media/');
+
+    if (!isBoardAsset) {
+        return;
     }
-    // Everything else: let browser handle normally
+
+    event.respondWith(networkFirstWithCacheFallback(request));
 });
 
-// Network first strategy - for all board resources
-async function networkFirstStrategy(request) {
+async function networkFirstWithCacheFallback(request) {
     try {
         const networkResponse = await fetch(request);
-
-        // If server returns 5xx (e.g., 504), treat it like a network failure and fall back
-        if (!networkResponse.ok && networkResponse.status >= 500) {
-            throw new Error(`Server error ${networkResponse.status}`);
+        if (!networkResponse.ok) {
+            throw new Error(`HTTP ${networkResponse.status}`);
         }
-
-        // Only cache successful responses (2xx)
-        if (networkResponse.ok) {
-            const cache = await caches.open(CACHE_NAME);
-            cache.put(request, networkResponse.clone());
-        }
-
+        const cache = await caches.open(CACHE_NAME);
+        cache.put(request, networkResponse.clone());
         return networkResponse;
     } catch (error) {
-        console.log('[ServiceWorker] Network/server failed, serving from cache:', request.url, error?.message);
         const cachedResponse = await caches.match(request);
-
         if (cachedResponse) {
-            // Notify clients that we're serving from cache (offline mode)
-            self.clients.matchAll().then(clients => {
-                clients.forEach(client => {
-                    client.postMessage({ type: 'SERVING_FROM_CACHE', url: request.url });
-                });
-            });
+            notifyClientsOfflineFallback(request.url);
             return cachedResponse;
         }
 
-        // If no cache and network fails, return offline page
-        return new Response(
-            `<!DOCTYPE html>
+        const url = new URL(request.url);
+        const isBoardNavigation = request.mode === 'navigate' && url.pathname.startsWith('/board/');
+        if (isBoardNavigation) {
+            return unavailableBoardPageResponse(error);
+        }
+
+        return new Response('Board unavailable.', {
+            status: 503,
+            statusText: 'Service Unavailable',
+            headers: { 'Content-Type': 'text/plain; charset=utf-8' },
+        });
+    }
+}
+
+function unavailableBoardPageResponse(error) {
+    const reason = escapeHtml(normalizeErrorReason(error));
+    const retry_interval = 10000; // milliseconds
+
+    return new Response(
+        `<!DOCTYPE html>
             <html>
             <head>
                 <meta charset="utf-8">
@@ -121,8 +100,8 @@ async function networkFirstStrategy(request) {
                 <title>Offline / Server Busy - Missionaries</title>
                 <style>
                     body {
-                        background-color: #1a1a1a;
-                        color: #ffffff;
+                        background-color: #3a3f44;
+                        color: #aaa;
                         font-family: sans-serif;
                         display: flex;
                         align-items: center;
@@ -141,43 +120,60 @@ async function networkFirstStrategy(request) {
             </head>
             <body>
                 <div class="message">
-                    <h1>📡 Offline / Server Busy</h1>
-                    <p>The board is unavailable right now. We'll keep trying and reload automatically when the server responds.</p>
+                    <h1>📡 Offline / Error</h1>
+                    <p>Sorry, the missionary board is unavailable right now.</p>
+                    <p>Reason: ${reason}</p>
+                    <p>I'll keep trying...</p>
                 </div>
                 <script>
-                    // Periodically check for network connectivity
+                    // Periodically reload and let the service worker attempt recovery.
                     function retry() {
-                        fetch('/board/', { method: 'HEAD', cache: 'no-store' })
-                            .then(() => window.location.reload())
-                            .catch(() => setTimeout(retry, 5000));
+                        window.location.reload();
                     }
 
-                    // Also listen for online event
-                    window.addEventListener('online', () => {
-                        window.location.reload();
-                    });
-
                     // Start checking
-                    setTimeout(retry, 5000);
+                    setTimeout(retry, ${retry_interval});
                 </script>
             </body>
             </html>`,
-            { headers: { 'Content-Type': 'text/html' } }
-        );
-    }
+        {
+            status: 503,
+            statusText: 'Service Unavailable',
+            headers: { 'Content-Type': 'text/html; charset=utf-8' },
+        }
+    );
 }
 
-// Listen for messages from the page
-self.addEventListener('message', event => {
-    if (event.data && event.data.type === 'SKIP_WAITING') {
-        self.skipWaiting();
+function normalizeErrorReason(error) {
+    if (!error) {
+        return 'Unknown error';
     }
 
-    if (event.data && event.data.type === 'CACHE_URLS') {
-        // Cache additional URLs provided by the page
-        const urls = event.data.urls;
-        caches.open(CACHE_NAME)
-            .then(cache => cache.addAll(urls))
-            .catch(err => console.error('[ServiceWorker] Failed to cache URLs:', err));
+    if (typeof error === 'string') {
+        return error;
     }
-});
+
+    if (error instanceof Error && error.message) {
+        return error.message;
+    }
+
+    return String(error);
+}
+
+function escapeHtml(value) {
+    return value
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+}
+
+function notifyClientsOfflineFallback(url) {
+    self.clients.matchAll({ type: 'window', includeUncontrolled: true })
+        .then((clients) => {
+            clients.forEach((client) => {
+                client.postMessage({ type: 'BOARD_OFFLINE_FALLBACK', url: url });
+            });
+        });
+}
