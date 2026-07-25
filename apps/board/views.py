@@ -127,4 +127,6 @@ def service_worker(_request: HttpRequest) -> HttpResponse:
     """
     sw_path = Path(__file__).parent / "service-worker.js"
     content = sw_path.read_text()
-    return HttpResponse(content, content_type="application/javascript")
+    response = HttpResponse(content, content_type="application/javascript")
+    response["Cache-Control"] = "no-store"
+    return response
