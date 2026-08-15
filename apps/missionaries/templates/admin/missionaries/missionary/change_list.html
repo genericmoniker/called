@@ -1,0 +1,9 @@
+{% extends "admin/change_list.html" %}
+{% block object-tools-items %}
+{{ block.super }}
+<li>
+  <a href="{% url 'admin:missionaries_missionary_missing_photos' %}" class="viewsitelink">
+    Missing Photos Report
+  </a>
+</li>
+{% endblock %}

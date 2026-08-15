@@ -1,7 +1,12 @@
+from datetime import date
+from typing import override
+
 from django.contrib import admin
+from django.db.models import Case, F, Q, QuerySet, When
 from django.forms import ModelForm
 from django.http import HttpRequest
-from django.urls import reverse
+from django.template.response import TemplateResponse
+from django.urls import URLPattern, path, reverse
 from django.utils.html import format_html
 
 from .models import Missionary, Ward
@@ -15,12 +20,75 @@ class WardAdmin(admin.ModelAdmin):
     search_fields = ("name",)
 
 
+class CurrentlyServingFilter(admin.SimpleListFilter):
+    """Filter missionaries by whether they are currently serving."""
+
+    title = "serving status"
+    parameter_name = "serving"
+
+    @override
+    def lookups(
+        self, request: HttpRequest, model_admin: admin.ModelAdmin
+    ) -> list[tuple[str, str]]:
+        """Return filter choices."""
+        return [
+            ("yes", "Currently serving"),
+            ("no", "Not currently serving"),
+        ]
+
+    @override
+    def queryset(
+        self, request: HttpRequest, queryset: QuerySet[Missionary]
+    ) -> QuerySet[Missionary]:
+        """Apply the filter to the queryset."""
+        today = date.today()  # noqa: DTZ011
+        if self.value() == "yes":
+            return queryset.filter(start_date__lte=today, end_date__gte=today)
+        if self.value() == "no":
+            return queryset.exclude(start_date__lte=today, end_date__gte=today)
+        return queryset
+
+
+class MissingPhotoFilter(admin.SimpleListFilter):
+    """Filter missionaries by whether they have a photo uploaded."""
+
+    title = "photo"
+    parameter_name = "has_photo"
+
+    @override
+    def lookups(
+        self, request: HttpRequest, model_admin: admin.ModelAdmin
+    ) -> list[tuple[str, str]]:
+        """Return filter choices."""
+        return [
+            ("no", "Missing photo"),
+            ("yes", "Has photo"),
+        ]
+
+    @override
+    def queryset(
+        self, request: HttpRequest, queryset: QuerySet[Missionary]
+    ) -> QuerySet[Missionary]:
+        """Apply the filter to the queryset."""
+        if self.value() == "no":
+            return queryset.filter(Q(photo__isnull=True) | Q(photo=""))
+        if self.value() == "yes":
+            return queryset.exclude(Q(photo__isnull=True) | Q(photo=""))
+        return queryset
+
+
 @admin.register(Missionary)
 class MissionaryAdmin(admin.ModelAdmin):
     """Admin interface for Missionary model."""
 
     list_display = ("__str__", "type", "mission", "ward", "start_date", "end_date")
-    list_filter = ("type", "ward", "mission")
+    list_filter = (
+        CurrentlyServingFilter,
+        MissingPhotoFilter,
+        "type",
+        "ward",
+        "mission",
+    )
     search_fields = (
         "first_name",
         "last_name",
@@ -69,6 +137,47 @@ class MissionaryAdmin(admin.ModelAdmin):
             },
         ),
     )
+
+    def get_urls(self) -> list[URLPattern]:
+        """Prepend the missing photos report URL to the default admin URLs."""
+        custom_urls = [
+            path(
+                "missing-photos/",
+                self.admin_site.admin_view(self.missing_photos_report),
+                name="missionaries_missionary_missing_photos",
+            ),
+        ]
+        return custom_urls + super().get_urls()
+
+    def missing_photos_report(self, request: HttpRequest) -> TemplateResponse:
+        """Render a report of currently serving missionaries without photos."""
+        today = date.today()  # noqa: DTZ011
+        missionaries = (
+            Missionary.objects.filter(start_date__lte=today, end_date__gte=today)
+            .filter(Q(photo__isnull=True) | Q(photo=""))
+            .order_by(
+                Case(
+                    When(last_name="", then=F("husband_last_name")),
+                    default=F("last_name"),
+                ),
+                Case(
+                    When(first_name="", then=F("husband_first_name")),
+                    default=F("first_name"),
+                ),
+            )
+        )
+        context = {
+            **self.admin_site.each_context(request),
+            "title": "Missing Photos Report",
+            "opts": self.model._meta,  # noqa: SLF001
+            "missionaries": missionaries,
+            "count": missionaries.count(),
+        }
+        return TemplateResponse(
+            request,
+            "admin/missionaries/missionary/missing_photos_report.html",
+            context,
+        )
 
     def save_model(
         self,

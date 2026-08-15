@@ -1,0 +1,97 @@
+{% extends "admin/base_site.html" %}
+{% load i18n %}
+
+{% block breadcrumbs %}
+<div class="breadcrumbs">
+  <a href="{% url 'admin:index' %}">{% trans "Home" %}</a>
+  &rsaquo; <a href="{% url 'admin:app_list' app_label=opts.app_label %}">{{ opts.app_config.verbose_name }}</a>
+  &rsaquo; <a href="{% url 'admin:missionaries_missionary_changelist' %}">{{ opts.verbose_name_plural|capfirst }}</a>
+  &rsaquo; {% trans "Missing Photos Report" %}
+</div>
+{% endblock %}
+
+{% block content %}
+<p>
+  Currently serving missionaries without a photo:
+  <strong>{{ count }}</strong>
+</p>
+
+{% if missionaries %}
+<p>
+  <button id="copy-html-btn" class="button">{% trans "Copy" %}</button>
+  <button id="copy-data-btn" class="button">{% trans "Copy as Data" %}</button>
+</p>
+<div id="changelist">
+  <table id="report-table">
+    <thead>
+      <tr>
+        <th scope="col">{% trans "Name" %}</th>
+        <th scope="col">{% trans "Ward" %}</th>
+        <th scope="col">{% trans "Mission" %}</th>
+        <th scope="col">{% trans "Start date" %}</th>
+        <th scope="col">{% trans "End date" %}</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for m in missionaries %}
+      <tr class="{% cycle 'row1' 'row2' %}">
+        <!-- No link added to make it easier to copy/paste the report. If desired, the first column would be:
+            <td><a href="{% url 'admin:missionaries_missionary_change' m.pk %}">{{ m }}</a></td>
+        -->
+        <td>{{ m }}</td>
+        <td>{{ m.ward }}</td>
+        <td>{{ m.mission }}</td>
+        <td>{{ m.start_date }}</td>
+        <td>{{ m.end_date }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% else %}
+<p class="help">{% trans "All currently serving missionaries have photos." %}</p>
+{% endif %}
+
+<br />
+<a href="{% url 'admin:missionaries_missionary_changelist' %}" class="button">
+  {% trans "Back to Missionaries" %}
+</a>
+
+<script>
+// Copy to clipboard functionality, both as tab-delimited data and "rich" HTML.
+function flash(btn, original) {
+  btn.textContent = '{% trans "Copied!" %}';
+  setTimeout(() => { btn.textContent = original; }, 2000);
+}
+
+document.getElementById('copy-html-btn').addEventListener('click', function () {
+  const table = document.getElementById('report-table');
+  const clone = table.cloneNode(true);
+  // Snapshot computed styles into inline styles so they survive the paste
+  const props = ['padding', 'textAlign', 'fontWeight', 'fontSize',
+                 'backgroundColor', 'color',
+                 'borderTop', 'borderRight', 'borderBottom', 'borderLeft'];
+  const srcEls = [table, ...table.querySelectorAll('thead, tbody, tr, th, td')];
+  const dstEls = [clone, ...clone.querySelectorAll('thead, tbody, tr, th, td')];
+  srcEls.forEach((el, i) => {
+    const cs = getComputedStyle(el);
+    props.forEach(p => { dstEls[i].style[p] = cs[p]; });
+  });
+  clone.style.borderCollapse = 'collapse';
+  const blob = new Blob([clone.outerHTML], { type: 'text/html' });
+  navigator.clipboard.write([new ClipboardItem({ 'text/html': blob })]).then(() => {
+    flash(this, '{% trans "Copy" %}');
+  });
+});
+
+document.getElementById('copy-data-btn').addEventListener('click', function () {
+  const rows = document.getElementById('report-table').querySelectorAll('tr');
+  const text = Array.from(rows).map(row =>
+    Array.from(row.querySelectorAll('th, td')).map(c => c.textContent.trim()).join('\t')
+  ).join('\n');
+  navigator.clipboard.writeText(text).then(() => {
+    flash(this, '{% trans "Copy as Data" %}');
+  });
+});
+</script>
+{% endblock %}
